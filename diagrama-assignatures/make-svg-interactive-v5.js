@@ -79,21 +79,30 @@ function processSVG() {
 }
 
 function highlightNode(nodeClass) {
+    console.log(`Highlighting node: ${nodeClass}`);
     let neighbors = new Set([nodeClass]);
     let visibleConnections = new Set();
     let connectionTypes = new Set();
     
     function addChildrenRecursively(parentClass) {
         const container = window.diagramContainers?.get(parentClass);
-        if (!container) return;
+        if (!container) {
+          console.log(`No container found for: ${parentClass}`);
+          return;
+        }
+        console.log(`Adding children recursively for container: ${parentClass}`);
         
         container.nodes.forEach(n => {
             if (!neighbors.has(n)) {
+                console.log(`Adding child node: ${n}`);
                 neighbors.add(n);
                 addChildrenRecursively(n);
             }
         });
-        container.connections.forEach(c => visibleConnections.add(c));
+        container.connections.forEach(c => {
+            console.log(`Adding connection: ${c}`);
+            visibleConnections.add(c);
+        });
     }
     
     addChildrenRecursively(nodeClass);
@@ -101,13 +110,20 @@ function highlightNode(nodeClass) {
     let currentNode = nodeClass;
     while (window.parentMap.has(currentNode)) {
         currentNode = window.parentMap.get(currentNode);
+        console.log(`Adding parent node: ${currentNode}`);
         neighbors.add(currentNode);
     }
-    
+
+    console.log("Visible connections:");
     document.querySelectorAll(".diagram-connection").forEach(connection => {
         let connectionClass = connection.classList[0];
         let parsed = parseConnectionID(connectionClass);
-        if (!parsed) return;
+        if (!parsed) {
+            console.log(`Skipping invalid connection: ${connectionClass}`);
+            return;
+        }
+
+        console.log(`Parsed connection: ${connectionClass}, Start: ${parsed.startNode}, End: ${parsed.endNode}`);
         
         if (
             parsed.startNode === nodeClass ||
@@ -115,6 +131,7 @@ function highlightNode(nodeClass) {
             neighbors.has(parsed.startNode) ||
             neighbors.has(parsed.endNode)
         ) {
+            console.log(`Adding connection to visible connections: ${connectionClass}`);
             visibleConnections.add(connectionClass);
             connectionTypes.add(parsed.connectionType);
             neighbors.add(parsed.startNode);
