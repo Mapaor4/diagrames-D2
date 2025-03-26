@@ -11,16 +11,24 @@
     <div id="contenidor-svg"></div>
     <script src="make-svg-interactive.js"></script>
     <script>
-        fetch("assignatures-v4.svg")
-            .then(response => response.text())
-            .then(svgContent => {
-                document.querySelector(".contenidor-svg").innerHTML = svgContent;
-                if (typeof attachSVGEvents === "function") {
-                    attachSVGEvents(); // Cridem la funció d'interacció un cop carregat l’SVG
-                    console.log("Holaaa");
-                }
-            })
-            .catch(error => console.error("Error carregant l'SVG:", error));
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("assignatures-v4.svg")
+                .then(response => response.text())
+                .then(svgContent => {
+                    const container = document.querySelector(".contenidor-svg");
+                    if (!container) {
+                        console.error("Error: No s'ha trobat el contenidor SVG.");
+                        return;
+                    }
+                    container.innerHTML = svgContent;
+    
+                    // Si el script extern ja està carregat, cridem la funció
+                    if (typeof attachSVGEvents === "function") {
+                        attachSVGEvents();
+                    }
+                })
+                .catch(error => console.error("Error carregant l'SVG:", error));
+        });
     </script>
 </body>
 </html>
