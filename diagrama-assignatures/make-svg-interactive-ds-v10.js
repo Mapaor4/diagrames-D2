@@ -133,20 +133,17 @@ class InteractiveSVG {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // Verificar si la connexió involucra DIRECTAMENT el node
-        const involucraDirectament = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
+        // 1. Connexions directes
+        const connexioDirecta = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
         
-        // Verificar si la connexió és entre fills del node (si és contenidor)
-        const esConnexioInterna = nodeDecodificat === info.startNode.split('.').slice(0, -1).join('.') && 
-                                 nodeDecodificat === info.endNode.split('.').slice(0, -1).join('.');
+        // 2. Connexions internes (entre fills del node)
+        const connexioInterna = info.startNode.startsWith(`${nodeDecodificat}.`) && 
+                              info.endNode.startsWith(`${nodeDecodificat}.`);
 
-        if (involucraDirectament || esConnexioInterna) {
+        if (connexioDirecta || connexioInterna) {
             connexions.add(elementConnexio);
-            
-            // Afegir NOMÉS els nodes directament connectats
             [info.startNode, info.endNode].forEach(nomNode => {
-                const classeNode = this.codificarBase64(nomNode);
-                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
+                const node = document.querySelector(`.${CSS.escape(this.codificarBase64(nomNode))}`);
                 if (node) nodesRelacionats.add(node);
             });
         }
@@ -165,22 +162,25 @@ resaltar(node) {
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
     const elementsAMostrar = new Set([node]);
 
-    // 1. Obtenir connexions directes
+    // 1. Afegir connexions directes i nodes relacionats
     const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
     connexions.forEach(c => elementsAMostrar.add(c));
     nodesRelacionats.forEach(n => elementsAMostrar.add(n));
 
-    // 2. Si és contenidor, afegir fills I LES SEVES CONNEXIONS DIRECTES
+    // 2. Si és contenidor, afegir TOTS els fills
     if (node.classList.contains('diagram-container')) {
         const descendents = this.obtenirDescendents(classeOriginal);
         descendents.forEach(d => {
             const element = document.querySelector(`.${CSS.escape(d)}`);
-            if (element) {
-                // Afegir només si té connexions pròpies
-                const decodificatFill = this.decodificarBase64(d);
-                const { connexions: c, nodesRelacionats: n } = this.obtenirConnexionsRelacionades(decodificatFill);
-                c.forEach(con => elementsAMostrar.add(con));
-                n.forEach(nd => elementsAMostrar.add(nd));
+            if (element) elementsAMostrar.add(element);
+        });
+
+        // 3. Afegir connexions entre fills (internes al contenidor)
+        this.connexionsMap.forEach((info, classeConnexio) => {
+            if (info.startNode.startsWith(`${nodeDecodificat}.`) && 
+                info.endNode.startsWith(`${nodeDecodificat}.`)) {
+                const con = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+                if (con) elementsAMostrar.add(con);
             }
         });
     }
