@@ -172,38 +172,44 @@ class InteractiveSVG {
     const connexions = new Set();
     const nodesRelacionats = new Set();
 
+    // Obtenim el camí base del node actual (sense el nom final)
+    const parts = nodeDecodificat.split('.');
+    const basePath = parts.length > 1 ? parts.slice(0, -1).join('.') : null;
+
     this.connexionsMap.forEach((info, classeConnexio) => {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
         // Debug: Mostrem la connexió que s'està avaluant
-        console.log(`Analitzant connexió: ${info.startNode} -> ${info.endNode}`);
+        console.log(`Analitzant connexió: ${info.startNode} -> ${info.endNode}`, {
+            nodeActual: nodeDecodificat,
+            basePath
+        });
 
-        // Cas 1: El node és directament un extrem de la connexió
+        // Cas 1: Connexió directa al node
         const esDirecte = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
         
-        // Cas 2: El node és pare d'algun extrem (per connexions internes)
+        // Cas 2: Node és pare d'algun extrem
         const esPare = info.startNode.startsWith(`${nodeDecodificat}.`) || 
                       info.endNode.startsWith(`${nodeDecodificat}.`);
         
-        // Cas 3: El node és fill del mateix contenidor que la connexió
-        const nodeParts = nodeDecodificat.split('.');
-        const esGerma = info.startNode.split('.')[0] === nodeParts[0] && 
-                       info.endNode.split('.')[0] === nodeParts[0] &&
-                       nodeParts.length > 1;
+        // Cas 3: Connexió entre germans (mateix path base)
+        const startBase = info.startNode.split('.').slice(0, -1).join('.');
+        const endBase = info.endNode.split('.').slice(0, -1).join('.');
+        const esGerma = basePath && (startBase === basePath || endBase === basePath);
 
         if (esDirecte || esPare || esGerma) {
-            console.log(`Connexió rellevant trobada: ${info.startNode} -> ${info.endNode}`, {
-                esDirecte,
-                esPare,
-                esGerma
+            console.log(`Connexió RELLEVANT trobada: ${info.startNode} -> ${info.endNode}`, {
+                tipus: esDirecte ? 'Directa' : esPare ? 'Pare-Fill' : 'Germans',
+                nodeBase: basePath,
+                startBase,
+                endBase
             });
 
             connexions.add(elementConnexio);
             
             // Afegim tots dos nodes de la connexió
-            const nodesConnexio = [info.startNode, info.endNode];
-            nodesConnexio.forEach(nomNode => {
+            [info.startNode, info.endNode].forEach(nomNode => {
                 const classeNode = this.codificarBase64(nomNode);
                 const node = document.querySelector(`.${CSS.escape(classeNode)}`);
                 if (node) {
@@ -214,8 +220,10 @@ class InteractiveSVG {
         }
     });
 
-    console.log(`Connexions trobades per ${nodeDecodificat}:`, 
-        Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])));
+    console.log(`RESUM CONNEXIONS per ${nodeDecodificat}:`, {
+        connexions: Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])),
+        nodesRelacionats: Array.from(nodesRelacionats).map(n => this.decodificarBase64(Array.from(n.classList)[0]))
+    });
 
     return { 
         connexions: Array.from(connexions), 
