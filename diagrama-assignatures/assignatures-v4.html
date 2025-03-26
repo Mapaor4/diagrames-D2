@@ -11,8 +11,8 @@
     <script>
         fetch("assignatures-v4.svg")
             .then(response => response.text())
-            .then(svgContingut => {
-                document.getElementById("contenidor-svg").innerHTML = svgContingut;
+            .then(svgContent => {
+                document.getElementById("contenidor-svg").innerHTML = svgContent;
             })
             .catch(error => console.error("Error carregant l'SVG:", error));
     </script>
