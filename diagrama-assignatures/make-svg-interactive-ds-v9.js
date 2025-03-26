@@ -72,13 +72,17 @@ class InteractiveSVG {
   }
 
   parsejarConnexio(decodificat) {
-    const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*(-[->]+\s*|<-+)\s*([\w.-]+)\)\[(\d+)\]$/;
+    // Nova regex que gestiona tant -> com -&gt;
+    const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
-    if (!match) return null;
+    if (!match) {
+      console.warn('Connexió no reconeguda:', decodificat);
+      return null;
+    }
     
     const containerPath = match[1] || '';
-    const tipus = match[3].trim();
+    const tipus = match[3].replace(/&gt;/g, '>'); // Normalitzem a >
 
     const resoldreRuta = (node, container) => {
       if (node.includes('.') || !container) return node;
@@ -86,7 +90,7 @@ class InteractiveSVG {
     };
 
     const startNode = resoldreRuta(match[2].trim(), containerPath);
-    const endNode = resoldreRuta(match[4].trim(), containerPath);
+    const endNode = resoldreRuta(match[6].trim(), containerPath);
 
     return {
       startNode: startNode,
@@ -156,10 +160,15 @@ class InteractiveSVG {
       const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
       if (!elementConnexio) return;
 
-      const startMatch = info.startNode === nodeDecodificat;
-      const endMatch = info.endNode === nodeDecodificat;
-      const containsNode = info.startNode.startsWith(nodeDecodificat + '.') || 
-                         info.endNode.startsWith(nodeDecodificat + '.');
+      // Verifiquem ambdós formats de fletxa
+      const normalitzatStart = info.startNode.replace(/&gt;/g, '>');
+      const normalitzatEnd = info.endNode.replace(/&gt;/g, '>');
+      const normalitzatNode = nodeDecodificat.replace(/&gt;/g, '>');
+
+      const startMatch = normalitzatStart === normalitzatNode;
+      const endMatch = normalitzatEnd === normalitzatNode;
+      const containsNode = normalitzatStart.startsWith(normalitzatNode + '.') || 
+                         normalitzatEnd.startsWith(normalitzatNode + '.');
 
       if (startMatch || endMatch || containsNode) {
         connexions.add(elementConnexio);
