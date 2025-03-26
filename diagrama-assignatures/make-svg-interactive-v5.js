@@ -19,6 +19,8 @@ function attachSVGEvents() {
 }
 
 function processSVG() {
+    console.log("processSVG iniciat");
+    try {
     const containerMap = new Map();
     const parentMap = new Map();
     
@@ -77,6 +79,10 @@ function processSVG() {
     
     window.diagramContainers = containerMap;
     window.parentMap = parentMap;
+}  catch (error) { 
+        console.log("error:", error);
+    } 
+    console.log("processSVG finalitzat");
 }
 
 function highlightNode(nodeClass) {
