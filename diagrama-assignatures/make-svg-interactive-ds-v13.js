@@ -43,13 +43,11 @@ class InteractiveSVG {
         const decodificat = this.decodificarBase64(classeOriginal);
         console.log("Element decodificat:", decodificat);
 
-        // Nova lògica per detectar connexions
-        const parts = decodificat.split('.');
-        const lastPart = parts[parts.length - 1];
-        const esConnexio = lastPart.startsWith('(');
+        // Nova lògica de detecció amb regex
+        const esConnexio = /\([^)]+\s[-<>&]+\s[^)]+\)\[\d+\]$/.test(decodificat);
 
         if (esConnexio) {
-            console.log("Connexio decodificada:", decodificat);
+            console.log("Connexio detectada:", decodificat);
             const infoConnexio = this.parsejarConnexio(decodificat);
             if (infoConnexio) {
                 this.connexionsMap.set(classeOriginal, infoConnexio);
@@ -58,6 +56,7 @@ class InteractiveSVG {
             }
         } else {
             g.classList.add('diagram-node');
+            const parts = decodificat.split('.');
             this.fullHierarchy.set(classeOriginal, parts);
             
             if (parts.length > 1) {
