@@ -1,25 +1,3 @@
-function attachSVGEvents() {
-    var style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    style.textContent = `
-        .hidden { opacity: 0.2; transition: opacity 0.3s; }
-        .diagram-node, .diagram-connection { transition: opacity 0.3s; }
-    `;
-    document.querySelector(".contenidor-svg svg").appendChild(style);
-
-    // Processem l’SVG per assignar classes correctes
-    processSVG();
-
-    // Assignem els events hover als nodes de l’SVG
-    document.querySelectorAll(".diagram-node, .diagram-container").forEach(node => {
-        node.addEventListener("mouseover", function() {
-            highlightNode(this.classList[0]);
-        });
-        node.addEventListener("mouseout", function() {
-            resetHighlight();
-        });
-    });
-}
-
 function processSVG() {
     const containerMap = new Map();
     const containerDescendants = new Map();
@@ -90,104 +68,12 @@ function processSVG() {
             if (containerElement) {
                 containerElement.classList.add("diagram-container");
             }
-        }
-    });
-}
-
-
-
-
-function collectAllDescendants(containerID, descendants = new Set()) {
-    const direct = window.containerDescendants?.get(containerID);
-    if (!direct) return descendants;
-
-    for (let child of direct) {
-        if (!descendants.has(child)) {
-            descendants.add(child);
-            collectAllDescendants(child, descendants);
-        }
-    }
-    return descendants;
-}
-
-function highlightNode(nodeClass) {
-    let neighbors = new Set([nodeClass]);
-    let visibleConnections = new Set();
-    let connectionTypes = new Set();
-
-    const allRelevantContainers = collectAllDescendants(nodeClass);
-    allRelevantContainers.add(nodeClass); // Incloure el contenidor arrel també
-
-    for (let containerID of allRelevantContainers) {
-        const container = window.diagramContainers?.get(containerID);
-        if (container) {
-            container.nodes.forEach(n => neighbors.add(n));
-            container.connections.forEach(c => visibleConnections.add(c));
-        }
-    }
-
-    document.querySelectorAll(".diagram-connection").forEach(connection => {
-        let connectionClass = connection.classList[0];
-        let parsed = parseConnectionID(connectionClass);
-        if (!parsed) return;
-
-        if (
-            parsed.startNode === nodeClass ||
-            parsed.endNode === nodeClass ||
-            neighbors.has(parsed.startNode) ||
-            neighbors.has(parsed.endNode)
-        ) {
-            visibleConnections.add(connectionClass);
-            connectionTypes.add(parsed.connectionType);
-            neighbors.add(parsed.startNode);
-            neighbors.add(parsed.endNode);
-        }
-    });
-
-    document.querySelectorAll(".diagram-node, .diagram-container").forEach(node => {
-        const className = node.classList[0];
-        if (!neighbors.has(className)) {
-            node.classList.add("hidden");
         } else {
-            node.classList.remove("hidden");
+            // Si és un contenidor buit (sense nodes ni connexions), també li afegim la classe
+            const containerElement = document.querySelector(`.contenidor-svg g.${CSS.escape(encodedParentID)}`);
+            if (containerElement) {
+                containerElement.classList.add("diagram-container");
+            }
         }
     });
-
-    document.querySelectorAll(".diagram-connection").forEach(connection => {
-        const className = connection.classList[0];
-        if (!visibleConnections.has(className)) {
-            connection.classList.add("hidden");
-        } else {
-            connection.classList.remove("hidden");
-        }
-    });
-}
-
-function resetHighlight() {
-    document.querySelectorAll(".diagram-node, .diagram-connection, .diagram-container").forEach(element => {
-        element.classList.remove("hidden");
-    });
-}
-
-function parseConnectionID(base64ID) {
-    try {
-        const decodedID = atob(base64ID);
-        const match = decodedID.match(/^\((.*?)\)\[\d+\]$/);
-        if (!match) return null;
-
-        const connectionMatch = match[1].match(/(.+?) (.+?) (.+)/);
-        if (!connectionMatch) return null;
-
-        const startNode = connectionMatch[1];
-        const connectionType = connectionMatch[2];
-        const endNode = connectionMatch[3];
-
-        return {
-            startNode: btoa(startNode),
-            endNode: btoa(endNode),
-            connectionType: connectionType
-        };
-    } catch (e) {
-        return null;
-    }
 }
