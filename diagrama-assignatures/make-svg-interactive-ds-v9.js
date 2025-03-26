@@ -71,24 +71,21 @@ class InteractiveSVG {
   }
 
   parsejarConnexio(decodificat) {
-    const regex = /^(?:([\w.]+)\.)?\(([\w\-]+)\s*([-<->]+)\s*([\w\-]+)\)\[(\d+)\]$/;
+    const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*([-><]+)\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
-    if (!match) {
-      console.warn('Connexió no reconeguda:', decodificat);
-      return null;
-    }
+    if (!match) return null;
     
     const containerPath = match[1] || '';
-    const tipus = match[3].trim().replace(/-/g, '');
+    const tipus = match[3].trim();
 
     const resoldreRuta = (node, container) => {
-      if (!node || node.includes('.')) return node;
-      return container ? `${container}.${node}` : node;
+      if (node.includes('.') || !container) return node;
+      return `${container}.${node}`;
     };
 
-    const startNode = resoldreRuta(match[2], containerPath);
-    const endNode = resoldreRuta(match[4], containerPath);
+    const startNode = resoldreRuta(match[2].trim(), containerPath);
+    const endNode = resoldreRuta(match[4].trim(), containerPath);
 
     return {
       startNode: startNode,
@@ -123,15 +120,13 @@ class InteractiveSVG {
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
     const elementsAMostrar = new Set([node]);
 
-    // Obtenir connexions directes
+    // Obtenir totes les connexions relacionades
     const connexionsRelacionades = this.obtenirConnexionsRelacionades(nodeDecodificat);
-    connexionsRelacionades.forEach(({ connexio, nodeA, nodeB }) => {
-      elementsAMostrar.add(connexio);
-      if (nodeA) elementsAMostrar.add(nodeA);
-      if (nodeB) elementsAMostrar.add(nodeB);
-    });
+    
+    connexionsRelacionades.connexions.forEach(c => elementsAMostrar.add(c));
+    connexionsRelacionades.nodesRelacionats.forEach(n => elementsAMostrar.add(n));
 
-    // Processar contenidors
+    // Si és contenidor, afegir fills i les seves connexions
     if (node.classList.contains('diagram-container')) {
       const descendents = this.obtenirDescendents(classeOriginal);
       descendents.forEach(d => {
@@ -139,11 +134,9 @@ class InteractiveSVG {
         if (element) {
           elementsAMostrar.add(element);
           const decodificatFill = this.decodificarBase64(d);
-          this.obtenirConnexionsRelacionades(decodificatFill).forEach(({ connexio, nodeA, nodeB }) => {
-            elementsAMostrar.add(connexio);
-            if (nodeA) elementsAMostrar.add(nodeA);
-            if (nodeB) elementsAMostrar.add(nodeB);
-          });
+          const connexionsFill = this.obtenirConnexionsRelacionades(decodificatFill);
+          connexionsFill.connexions.forEach(c => elementsAMostrar.add(c));
+          connexionsFill.nodesRelacionats.forEach(n => elementsAMostrar.add(n));
         }
       });
     }
@@ -155,49 +148,49 @@ class InteractiveSVG {
   }
 
   obtenirConnexionsRelacionades(nodeDecodificat) {
-    const resultat = [];
-    
+    const connexions = new Set();
+    const nodesRelacionats = new Set();
+
     this.connexionsMap.forEach((info, classeConnexio) => {
-      const connexioElement = document.querySelector(`.${CSS.escape(classeConnexio)}`);
-      if (!connexioElement) return;
+      const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+      if (!elementConnexio) return;
 
       const startClass = this.codificarBase64(info.startNode);
       const endClass = this.codificarBase64(info.endNode);
-      const nodeA = document.querySelector(`.${CSS.escape(startClass)}`);
-      const nodeB = document.querySelector(`.${CSS.escape(endClass)}`);
+      
+      const nodeStart = document.querySelector(`.${CSS.escape(startClass)}`);
+      const nodeEnd = document.querySelector(`.${CSS.escape(endClass)}`);
 
-      const relacionat = 
-        info.startNode === nodeDecodificat ||
-        info.endNode === nodeDecodificat ||
-        info.startNode.startsWith(`${nodeDecodificat}.`) ||
-        info.endNode.startsWith(`${nodeDecodificat}.`);
+      const involucraNode = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
+      const esConte = info.startNode.startsWith(nodeDecodificat + '.') || info.endNode.startsWith(nodeDecodificat + '.');
 
-      if (relacionat) {
-        resultat.push({
-          connexio: connexioElement,
-          nodeA: nodeA,
-          nodeB: nodeB
-        });
+      if (involucraNode || esConte) {
+        connexions.add(elementConnexio);
+        if (nodeStart) nodesRelacionats.add(nodeStart);
+        if (nodeEnd) nodesRelacionats.add(nodeEnd);
       }
     });
 
-    return resultat;
+    return {
+      connexions: Array.from(connexions),
+      nodesRelacionats: Array.from(nodesRelacionats)
+    };
   }
 
   obtenirDescendents(classeBase) {
-    const descendents = [];
+    const descendents = new Set();
     const cua = [classeBase];
     
     while (cua.length > 0) {
       const actual = cua.pop();
       const fills = this.containerMap.get(actual) || [];
       fills.forEach(fill => {
-        descendents.push(fill);
+        descendents.add(fill);
         cua.push(fill);
       });
     }
     
-    return descendents;
+    return Array.from(descendents);
   }
 
   reiniciar() {
