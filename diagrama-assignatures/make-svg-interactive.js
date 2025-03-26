@@ -24,7 +24,8 @@ function processSVG() {
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
         let classList = element.classList;
 
-        if (!classList || classList.contains("shape") || classList.contains("invisible") || classList.contains("semestre")) return; // AFEGIR ELS ELEMENTS QUE VULGUIS IGNORAR
+         // AFEGIR ELS ELEMENTS A IGNORAR
+        if (!classList || classList.contains("shape") || classList.contains("invisible") || classList.contains("semestre") || classList.contains("emplenar-fila")) return;
 
         const className = classList[0]; // Agafem la primera classe que és l'identificador en base64 del node o connexió
         if (!className) return; // Per seguretat
