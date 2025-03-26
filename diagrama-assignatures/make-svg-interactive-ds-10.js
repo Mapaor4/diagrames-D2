@@ -74,27 +74,37 @@ class InteractiveSVG {
     const match = decodificat.match(regex);
     
     if (!match) {
-      console.warn('Connexió no reconeguda:', decodificat);
-      return null;
+        console.warn('Connexió no reconeguda:', decodificat);
+        return null;
     }
-    
+
     const containerPath = match[1] || '';
     const tipus = match[3].replace(/&gt;/g, '>');
 
-    const resoldreRuta = (node, container) => {
-      if (node.includes('.') || !container) return node;
-      return `${container}.${node}`;
+    // Funció per resoldre rutes absolutes
+    const resoldreRutaAbsoluta = (node, container) => {
+        // Si el node ja té un path absolut (conté punt), el deixem tal qual
+        if (node.includes('.')) return node;
+        
+        // Si estem en un contenidor, afegim el seu path
+        return container ? `${container}.${node}` : node;
     };
 
-    const startNode = resoldreRuta(match[2].trim(), containerPath);
-    const endNode = resoldreRuta(match[6].trim(), containerPath);
+    const startNode = resoldreRutaAbsoluta(match[2].trim(), containerPath);
+    const endNode = resoldreRutaAbsoluta(match[6].trim(), containerPath);
 
-    return {
-      startNode: startNode,
-      tipus: tipus,
-      endNode: endNode
-    };
-  }
+    // Debug per connexions internes
+    if (containerPath) {
+        console.log(`Connexió interna processada:`, {
+            original: decodificat,
+            start: startNode,
+            end: endNode,
+            container: containerPath
+        });
+    }
+
+    return { startNode, tipus, endNode };
+}
 
   marcarContenidors() {
     this.containerMap.forEach((fills, classePare) => {
@@ -163,30 +173,39 @@ class InteractiveSVG {
     const nodesRelacionats = new Set();
 
     this.connexionsMap.forEach((info, classeConnexio) => {
-      const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
-      if (!elementConnexio) return;
+        const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+        if (!elementConnexio) return;
 
-      const startMatch = info.startNode === nodeDecodificat;
-      const endMatch = info.endNode === nodeDecodificat;
-      const esConte = info.startNode.startsWith(`${nodeDecodificat}.`) || 
-                     info.endNode.startsWith(`${nodeDecodificat}.`);
+        // Normalitzem els noms
+        const normalitzatStart = info.startNode.replace(/&gt;/g, '>');
+        const normalitzatEnd = info.endNode.replace(/&gt;/g, '>');
+        const normalitzatNode = nodeDecodificat.replace(/&gt;/g, '>');
 
-      if (startMatch || endMatch || esConte) {
-        connexions.add(elementConnexio);
-        
-        [info.startNode, info.endNode].forEach(nomNode => {
-          const classeNode = this.codificarBase64(nomNode);
-          const node = document.querySelector(`.${CSS.escape(classeNode)}`);
-          if (node) nodesRelacionats.add(node);
-        });
-      }
+        // Comprovem si:
+        // 1. El node és un dels extrems de la connexió
+        // 2. El node és pare d'algun extrem (per connexions internes)
+        const esStart = normalitzatStart === normalitzatNode;
+        const esEnd = normalitzatEnd === normalitzatNode;
+        const esPareDeStart = normalitzatStart.startsWith(`${normalitzatNode}.`);
+        const esPareDeEnd = normalitzatEnd.startsWith(`${normalitzatNode}.`);
+
+        if (esStart || esEnd || esPareDeStart || esPareDeEnd) {
+            connexions.add(elementConnexio);
+            
+            // Afegim tots dos nodes de la connexió
+            [info.startNode, info.endNode].forEach(nomNode => {
+                const classeNode = this.codificarBase64(nomNode);
+                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
+                if (node) nodesRelacionats.add(node);
+            });
+        }
     });
 
     return { 
-      connexions: Array.from(connexions), 
-      nodesRelacionats: Array.from(nodesRelacionats) 
+        connexions: Array.from(connexions), 
+        nodesRelacionats: Array.from(nodesRelacionats) 
     };
-  }
+}
 
   obtenirDescendents(classeBase) {
     const descendents = new Set();
