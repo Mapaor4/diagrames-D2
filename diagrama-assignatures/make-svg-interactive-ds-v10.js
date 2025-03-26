@@ -171,64 +171,61 @@ class InteractiveSVG {
   obtenirConnexionsRelacionades(nodeDecodificat) {
     const connexions = new Set();
     const nodesRelacionats = new Set();
-
-    // Obtenim el camí base del node actual (sense el nom final)
-    const parts = nodeDecodificat.split('.');
-    const basePath = parts.length > 1 ? parts.slice(0, -1).join('.') : null;
+    const partsNode = nodeDecodificat.split('.');
+    const contenidorsNode = this.obtenirJerarquiaCompleta(nodeDecodificat);
 
     this.connexionsMap.forEach((info, classeConnexio) => {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // Debug: Mostrem la connexió que s'està avaluant
-        console.log(`Analitzant connexió: ${info.startNode} -> ${info.endNode}`, {
-            nodeActual: nodeDecodificat,
-            basePath
-        });
-
-        // Cas 1: Connexió directa al node
-        const esDirecte = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
+        // 1. Comprovació directa
+        const directe = [info.startNode, info.endNode].includes(nodeDecodificat);
         
-        // Cas 2: Node és pare d'algun extrem
-        const esPare = info.startNode.startsWith(`${nodeDecodificat}.`) || 
-                      info.endNode.startsWith(`${nodeDecodificat}.`);
+        // 2. Parentiu
+        const esPare = [info.startNode, info.endNode].some(n => 
+            n.startsWith(`${nodeDecodificat}.`)
+        );
         
-        // Cas 3: Connexió entre germans (mateix path base)
-        const startBase = info.startNode.split('.').slice(0, -1).join('.');
-        const endBase = info.endNode.split('.').slice(0, -1).join('.');
-        const esGerma = basePath && (startBase === basePath || endBase === basePath);
+        // 3. Germans
+        const contenidorConnexio = this.obtenirContenidorConnexio(info);
+        const esGerma = contenidorsNode.includes(contenidorConnexio);
+        
+        // 4. Ancestre comú
+        const ancestorMatch = [info.startNode, info.endNode].some(n => 
+            this.teAncestreComu(n, nodeDecodificat)
+        );
 
-        if (esDirecte || esPare || esGerma) {
-            console.log(`Connexió RELLEVANT trobada: ${info.startNode} -> ${info.endNode}`, {
-                tipus: esDirecte ? 'Directa' : esPare ? 'Pare-Fill' : 'Germans',
-                nodeBase: basePath,
-                startBase,
-                endBase
-            });
-
+        if (directe || esPare || esGerma || ancestorMatch) {
             connexions.add(elementConnexio);
-            
-            // Afegim tots dos nodes de la connexió
             [info.startNode, info.endNode].forEach(nomNode => {
-                const classeNode = this.codificarBase64(nomNode);
-                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
-                if (node) {
-                    nodesRelacionats.add(node);
-                    console.log(`Afegit node relacionat: ${nomNode}`);
-                }
+                const node = document.querySelector(`.${CSS.escape(this.codificarBase64(nomNode))}`);
+                if (node) nodesRelacionats.add(node);
             });
         }
     });
 
-    console.log(`RESUM CONNEXIONS per ${nodeDecodificat}:`, {
-        connexions: Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])),
-        nodesRelacionats: Array.from(nodesRelacionats).map(n => this.decodificarBase64(Array.from(n.classList)[0]))
-    });
+    return { connexions: Array.from(connexions), nodesRelacionats: Array.from(nodesRelacionats) };
+}
 
-    return { 
-        connexions: Array.from(connexions), 
-        nodesRelacionats: Array.from(nodesRelacionats) 
-    };
+// Helpers addicionals
+obtenirJerarquiaCompleta(nodeDecodificat) {
+    const parts = nodeDecodificat.split('.');
+    return parts.map((_, i) => parts.slice(0, i+1).join('.'));
+}
+
+teAncestreComu(nodeA, nodeB) {
+    const partsA = nodeA.split('.');
+    const partsB = nodeB.split('.');
+    return partsA.some((_, i) => 
+        partsA.slice(0, i+1).join('.') === partsB.slice(0, i+1).join('.')
+    );
+}
+
+obtenirContenidorConnexio(info) {
+    const startParts = info.startNode.split('.');
+    const endParts = info.endNode.split('.');
+    const commonDepth = Math.min(startParts.length, endParts.length) - 1;
+    return startParts.slice(0, commonDepth).join('.');
 }
 
   obtenirDescendents(classeBase) {
