@@ -3,8 +3,7 @@ class InteractiveSVG {
     this.containerMap = new Map();
     this.parentMap = new Map();
     this.fullHierarchy = new Map();
-    this.connexionsMap = new Map();
-    this.nodeConnexions = new Map();
+    this.connexionsMap = new Map(); // Nova estructura per guardar info de connexions
   }
 
   init() {
@@ -37,7 +36,7 @@ class InteractiveSVG {
       g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
-    // Processar nodes i connexions
+    // Processar elements
     svg.querySelectorAll('g').forEach(g => {
       const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
       if (!classeOriginal) return;
@@ -45,58 +44,53 @@ class InteractiveSVG {
       const decodificat = this.decodificarBase64(classeOriginal);
       const esConnexio = decodificat.startsWith('(');
 
-      // Assignar classe bàsica
       g.classList.add(esConnexio ? 'diagram-connection' : 'diagram-node');
 
       if (esConnexio) {
-        this.processarConnexio(g, classeOriginal, decodificat);
+        // Processar connexions
+        const infoConnexio = this.parsejarConnexio(decodificat);
+        if (infoConnexio) {
+          this.connexionsMap.set(classeOriginal, infoConnexio);
+        }
       } else {
-        this.processarNode(g, classeOriginal, decodificat);
+        // Processar nodes
+        const parts = decodificat.split('.');
+        this.fullHierarchy.set(classeOriginal, parts);
+        
+        if (parts.length > 1) {
+          const nomPare = parts.slice(0, -1).join('.');
+          const classePare = this.codificarBase64(nomPare);
+          this.parentMap.set(classeOriginal, classePare);
+          
+          if (!this.containerMap.has(classePare)) {
+            this.containerMap.set(classePare, []);
+          }
+          this.containerMap.get(classePare).push(classeOriginal);
+        }
       }
     });
 
-    // Marcar contenidors
     this.marcarContenidors();
   }
 
-  processarNode(g, classeOriginal, decodificat) {
-    const parts = decodificat.split('.');
-    this.fullHierarchy.set(classeOriginal, parts);
+  // Nova funció per analitzar connexions
+  parsejarConnexio(decodificat) {
+    const regex = /^\((.*?)\s*([-<->]+)\s*(.*?)\)\[\d+\]$/;
+    const match = decodificat.match(regex);
     
-    if (parts.length > 1) {
-      const nomPare = parts.slice(0, -1).join('.');
-      const classePare = this.codificarBase64(nomPare);
-      this.parentMap.set(classeOriginal, classePare);
-      
-      if (!this.containerMap.has(classePare)) {
-        this.containerMap.set(classePare, []);
-      }
-      this.containerMap.get(classePare).push(classeOriginal);
-    }
-  }
-
-  processarConnexio(g, classeOriginal, decodificat) {
-    const infoConnexio = this.parsejarConnexio(decodificat);
-    if (!infoConnexio) return;
-
-    this.connexionsMap.set(classeOriginal, infoConnexio);
+    if (!match) return null;
     
-    // Registrar connexions pels nodes
-    const startClass = this.codificarBase64(infoConnexio.start);
-    const endClass = this.codificarBase64(infoConnexio.end);
-    
-    [startClass, endClass].forEach(nodeClass => {
-      if (!this.nodeConnexions.has(nodeClass)) {
-        this.nodeConnexions.set(nodeClass, []);
-      }
-      this.nodeConnexions.get(nodeClass).push(classeOriginal);
-    });
+    return {
+      startNode: match[1].trim(),
+      tipus: match[2].trim(),
+      endNode: match[3].trim()
+    };
   }
 
   marcarContenidors() {
     this.containerMap.forEach((fills, classePare) => {
       const elementPare = document.querySelector(`.${CSS.escape(classePare)}`);
-      if (elementPare && elementPare.classList.contains('diagram-node')) {
+      if (elementPare) {
         elementPare.classList.add('diagram-container');
       }
     });
@@ -116,70 +110,60 @@ class InteractiveSVG {
     const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
     if (!classeOriginal) return;
 
-    const elementsAMostrar = new Set();
-    elementsAMostrar.add(node);
-
     const esContenidor = node.classList.contains('diagram-container');
+    const elementsAMostrar = new Set();
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
 
-    // Gestió de connexions i veïns
-    if (!esContenidor) {
-      // Node normal: mostrar connexions directes i veïns
-      const connexions = this.nodeConnexions.get(classeOriginal) || [];
-      
-      connexions.forEach(connexioClasse => {
-        const connexio = document.querySelector(`.${CSS.escape(connexioClasse)}`);
-        if (connexio) {
-          elementsAMostrar.add(connexio);
-          
-          // Afegir node veí
-          const info = this.connexionsMap.get(connexioClasse);
-          if (info) {
-            const altreNode = info.start === nodeDecodificat ? info.end : info.start;
-            const altreNodeClass = this.codificarBase64(altreNode);
-            const altreElement = document.querySelector(`.${CSS.escape(altreNodeClass)}`);
-            if (altreElement) elementsAMostrar.add(altreElement);
-          }
-        }
-      });
-    } else {
-      // Contenidor: mostrar tota la descendència i connexions internes
+    // 1. Afegir element principal
+    elementsAMostrar.add(node);
+
+    // 2. Obtenir veïns i connexions
+    const { veins, connexions } = this.obtenirVeinsIConnexions(classeOriginal, nodeDecodificat);
+    
+    veins.forEach(veí => elementsAMostrar.add(veí));
+    connexions.forEach(connexio => elementsAMostrar.add(connexio));
+
+    // 3. Gestió de contenidors
+    if (esContenidor) {
       const descendents = this.obtenirDescendents(classeOriginal);
       descendents.forEach(d => {
         const element = document.querySelector(`.${CSS.escape(d)}`);
-        if (element) {
-          elementsAMostrar.add(element);
-          
-          // Afegir connexions dels fills
-          const connexionsFill = this.nodeConnexions.get(d) || [];
-          connexionsFill.forEach(c => {
-            const connexio = document.querySelector(`.${CSS.escape(c)}`);
-            if (connexio) elementsAMostrar.add(connexio);
-          });
-        }
+        if (element) elementsAMostrar.add(element);
       });
     }
 
-    // Aplicar canvis visuals
+    // 4. Aplicar canvis
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
       el.classList.toggle('hidden', !elementsAMostrar.has(el));
     });
   }
 
-  reiniciar() {
-    document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
-  }
+  obtenirVeinsIConnexions(classeOriginal, nodeDecodificat) {
+    const veins = new Set();
+    const connexions = new Set();
+    
+    // Obtenir totes les connexions relacionades
+    this.connexionsMap.forEach((info, classeConnexio) => {
+      const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+      if (!elementConnexio) return;
 
-  parsejarConnexio(decodificat) {
-    const regex = /\(([\w.]+)\s*([<-][->]|--)\s*([\w.]+)\)/;
-    const match = decodificat.match(regex);
-    if (!match) return null;
+      // Comprovar si la connexió involucra el node actual
+      if (info.startNode === nodeDecodificat || info.endNode === nodeDecodificat) {
+        connexions.add(elementConnexio);
+        
+        // Afegir nodes veïns
+        const classeStart = this.codificarBase64(info.startNode);
+        const classeEnd = this.codificarBase64(info.endNode);
+        
+        const nodeStart = document.querySelector(`.${CSS.escape(classeStart)}`);
+        const nodeEnd = document.querySelector(`.${CSS.escape(classeEnd)}`);
+        
+        if (nodeStart) veins.add(nodeStart);
+        if (nodeEnd) veins.add(nodeEnd);
+      }
+    });
 
-    return {
-      start: match[1],
-      type: match[2],
-      end: match[3]
-    };
+    return { veins: Array.from(veins), connexions: Array.from(connexions) };
   }
 
   obtenirDescendents(classeBase) {
@@ -195,7 +179,11 @@ class InteractiveSVG {
       });
     }
     
-    return descendents;
+    return Array.from(descendents);
+  }
+
+  reiniciar() {
+    document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
   }
 
   // Helpers
@@ -221,7 +209,6 @@ function attachSVGEvents() {
   new InteractiveSVG().init();
 }
 
-// Inicialització per si falla la crida manual
 document.addEventListener('DOMContentLoaded', () => {
   if (document.querySelector('.contenidor-svg svg')) {
     new InteractiveSVG().init();
