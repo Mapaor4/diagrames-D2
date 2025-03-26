@@ -43,7 +43,7 @@ class InteractiveSVG {
       const decodificat = this.decodificarBase64(classeOriginal);
       console.log("Element decodificat:", decodificat);
       
-      if (decodificat.startsWith('(')) {
+      if (decodificat.startsWith('(')) { // AQUI EL PROBLEMA DE TOT PLEGAT. Tenim element decodificat: "s1.(algebra -&gt; calcul)[0]", i no s'avalua bé
         console.log("Connexio decodificada:", decodificat);
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
