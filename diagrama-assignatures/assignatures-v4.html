@@ -12,9 +12,12 @@
     <script src="make-svg-interactive.js"></script>
     <script>
         fetch("assignatures-v4.svg")
-            .then(resposta => response.text())
-            .then(contingutSVG => {
-                document.getElementById("contenidor-svg").innerHTML = contingutSVG;
+            .then(response => response.text())
+            .then(svgContent => {
+                document.querySelector(".contenidor-svg").innerHTML = svgContent;
+                if (typeof attachSVGEvents === "function") {
+                    attachSVGEvents(); // Cridem la funció d'interacció un cop carregat l’SVG
+                }
             })
             .catch(error => console.error("Error carregant l'SVG:", error));
     </script>
