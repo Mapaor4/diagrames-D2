@@ -1,65 +1,52 @@
 class InteractiveSVG {
   constructor() {
-    this.containerMap = new Map();  // Map of containers and their children
-    this.parentMap = new Map();     // Parent-child relationships
-    this.initialized = false;
+    this.containerMap = new Map();
   }
 
   init() {
     try {
-      this.addStyles();
       this.processSVG();
-      this.attachEventListeners();
-      this.initialized = true;
-      console.log('Interactive SVG initialized');
+      console.log('Classes assignades correctament');
     } catch (error) {
-      console.error('Initialization error:', error);
+      console.error('Error:', error);
     }
   }
 
-  addStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-      .hidden { opacity: 0.2; transition: opacity 0.3s; }
-      .diagram-node { cursor: pointer; transition: opacity 0.3s; }
-      .diagram-connection { stroke-opacity: 0.6; transition: stroke-opacity 0.3s; }
-    `;
-    document.head.appendChild(style);
-  }
-
   processSVG() {
-    const svg = document.querySelector('.contenidor-svg svg');
-    if (!svg) throw new Error('SVG element not found');
+    const svg = document.querySelector('.interactive-svg-container svg'); // Canvia el selector segons el teu HTML
+    if (!svg) throw new Error('No es troba el SVG (afegeix un div amb classe "interactive-svg-container" que contingui l\'SVG)');
 
+    // Primer passat: Netejar classes existents
+    svg.querySelectorAll('g').forEach(g => {
+      g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
+    });
+
+    // Segon passat: Assignar classes correctes
     svg.querySelectorAll('g').forEach(g => {
       const originalClass = Array.from(g.classList).find(c => this.isValidBase64(c));
       if (!originalClass) return;
 
-      // Clear existing diagram classes
-      g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
-
       const decoded = this.decodeBase64(originalClass);
       const isConnection = decoded.startsWith('(');
       
-      if (isConnection) {
-        g.classList.add('diagram-connection');
-      } else {
-        g.classList.add('diagram-node');
+      // Assignar classe principal
+      g.classList.add(isConnection ? 'diagram-connection' : 'diagram-node');
+
+      // Registrar contenidors
+      if (!isConnection) {
         const parentName = this.getParentName(decoded);
         if (parentName) {
-          this.registerParentChild(originalClass, parentName);
+          const parentClass = this.encodeBase64(parentName);
+          this.registerContainer(parentClass, originalClass);
         }
       }
     });
 
-    // Mark containers after processing all nodes
+    // Tercer passat: Marcar contenidors
     this.markContainers();
   }
 
-  registerParentChild(childClass, parentName) {
-    const parentClass = this.encodeBase64(parentName);
-    this.parentMap.set(childClass, parentClass);
-    
+  registerContainer(parentClass, childClass) {
     if (!this.containerMap.has(parentClass)) {
       this.containerMap.set(parentClass, []);
     }
@@ -69,61 +56,35 @@ class InteractiveSVG {
   markContainers() {
     this.containerMap.forEach((children, parentClass) => {
       const parentElement = document.querySelector(`.${CSS.escape(parentClass)}`);
-      if (parentElement) {
+      if (parentElement && parentElement.classList.contains('diagram-node')) {
         parentElement.classList.add('diagram-container');
       }
     });
   }
 
-  // Helper methods
+  // Helpers
   isValidBase64(str) {
-    try {
-      return btoa(atob(str)) === str;
-    } catch (e) {
-      return false;
-    }
+    return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(str);
   }
 
   decodeBase64(str) {
-    return decodeURIComponent(escape(atob(str)));
+    try {
+      return decodeURIComponent(escape(atob(str)));
+    } catch {
+      return '';
+    }
   }
 
   encodeBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  getShortName(decoded) {
-    return decoded.split('.').pop();
-  }
-
   getParentName(decoded) {
-    const parts = decoded.split('.');
-    return parts.length > 1 ? parts.slice(0, -1).join('.') : null;
-  }
-
-  attachEventListeners() {
-    document.querySelectorAll('.diagram-node').forEach(node => {
-      node.addEventListener('mouseover', () => this.highlight(node));
-      node.addEventListener('mouseout', () => this.reset());
-    });
-  }
-
-  highlight(node) {
-    const originalClass = Array.from(node.classList).find(c => this.isValidBase64(c));
-    if (!originalClass) return;
-
-    document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
-      const elClass = Array.from(el.classList).find(c => this.isValidBase64(c));
-      if (elClass !== originalClass) el.classList.add('hidden');
-    });
-  }
-
-  reset() {
-    document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
+    return decoded.includes('.') ? decoded.split('.').slice(0, -1).join('.') : null;
   }
 }
 
-// Initialization
+// Ús: Assegura't que el teu SVG està dins d'un div amb classe "interactive-svg-container"
 document.addEventListener('DOMContentLoaded', () => {
   new InteractiveSVG().init();
 });
