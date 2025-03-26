@@ -19,8 +19,6 @@ function attachSVGEvents() {
 }
 
 function processSVG() {
-    console.log("processSVG iniciat");
-    try {
     const containerMap = new Map();
     const parentMap = new Map();
     
@@ -31,7 +29,6 @@ function processSVG() {
         const className = classList[0];
         if (!className) return;
         
-        // Comprovem si la classe és base64 vàlida
         if (!isValidBase64(className)) {
             console.warn(`Classe ignorada (no és base64 vàlid): ${className}`);
             return;
@@ -69,7 +66,6 @@ function processSVG() {
         }
 
         console.log(`Element processat: ${decoded}, Assignat com: ${element.classList.contains("diagram-connection") ? "Connexió" : "Node"}`);
-        console.log(`Element final: ${element.classList}`);
     });
     
     containerMap.forEach((_, containerID) => {
@@ -80,10 +76,6 @@ function processSVG() {
     
     window.diagramContainers = containerMap;
     window.parentMap = parentMap;
-}  catch (error) { 
-        console.log("error:", error);
-    } 
-    console.log("processSVG finalitzat");
 }
 
 function highlightNode(nodeClass) {
@@ -91,16 +83,25 @@ function highlightNode(nodeClass) {
     let visibleConnections = new Set();
     let connectionTypes = new Set();
     
+    function addChildrenRecursively(parentClass) {
+        const container = window.diagramContainers?.get(parentClass);
+        if (!container) return;
+        
+        container.nodes.forEach(n => {
+            if (!neighbors.has(n)) {
+                neighbors.add(n);
+                addChildrenRecursively(n);
+            }
+        });
+        container.connections.forEach(c => visibleConnections.add(c));
+    }
+    
+    addChildrenRecursively(nodeClass);
+    
     let currentNode = nodeClass;
     while (window.parentMap.has(currentNode)) {
         currentNode = window.parentMap.get(currentNode);
         neighbors.add(currentNode);
-    }
-    
-    const container = window.diagramContainers?.get(nodeClass);
-    if (container) {
-        container.nodes.forEach(n => neighbors.add(n));
-        container.connections.forEach(c => visibleConnections.add(c));
     }
     
     document.querySelectorAll(".diagram-connection").forEach(connection => {
