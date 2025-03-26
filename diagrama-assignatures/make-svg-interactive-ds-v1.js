@@ -3,25 +3,38 @@ class InteractiveSVG {
     this.containerMap = new Map();
     this.parentMap = new Map();
     this.initialized = false;
-    console.log('Constructor executat'); // Punt de control 1
   }
 
   init() {
-    console.log('Iniciant inicialització...'); // Punt de control 2
+    console.log('🔍 Cercant SVG...');
     try {
       this.addStyles();
-      this.processSVG();
-      this.attachEventListeners();
-      this.initialized = true;
-      console.log('✅ Interactive SVG inicialitzat correctament');
+      
+      // Intentar fins a 5 vegades amb retard entre intents
+      let attempts = 0;
+      const maxAttempts = 5;
+      const tryProcessing = () => {
+        attempts++;
+        console.log(`\n⟳ Intent ${attempts}/${maxAttempts}...`);
+        
+        if (this.processSVG()) {
+          this.attachEventListeners();
+          this.initialized = true;
+          console.log('✅ SVG interactiu inicialitzat correctament');
+        } else if (attempts < maxAttempts) {
+          setTimeout(tryProcessing, 500 * attempts);
+        } else {
+          console.error('❌ No s\'ha pogut inicialitzar després de múltiples intents');
+        }
+      };
+      
+      tryProcessing();
     } catch (error) {
-      console.error('❌ Error inicialitzant:', error);
-      this.cleanup();
+      console.error('❌ Error crític:', error);
     }
   }
 
   addStyles() {
-    console.log('Afegint estils...'); // Punt de control 3
     const styleId = 'diagram-styles';
     if (document.getElementById(styleId)) return;
 
@@ -34,155 +47,119 @@ class InteractiveSVG {
       }
     `;
     document.head.appendChild(style);
-    console.log('Estils afegits correctament');
+    console.log('🎨 Estils afegits');
   }
 
   processSVG() {
-    console.log('Processant SVG...'); // Punt de control 4
-    
     const svgContainer = document.querySelector('.contenidor-svg');
     if (!svgContainer) {
-      console.error('❌ No es troba el contenidor SVG');
-      throw new Error('SVG container not found');
+      console.error('❌ No es troba .contenidor-svg');
+      return false;
     }
 
-    const elements = svgContainer.querySelectorAll('g');
-    console.log(`Elements <g> trobats: ${elements.length}`); // Punt de control 5
+    // Cerca més flexible d'elements SVG
+    const elements = [
+      ...svgContainer.querySelectorAll('g'),
+      ...svgContainer.querySelectorAll('svg g') // Per si està niuat
+    ];
+    
+    console.log(`📊 Elements trobats: ${elements.length}`);
+    elements.forEach(el => console.log('  ├─', el));
 
     if (elements.length === 0) {
-      console.warn('⚠️ No s\'han trobat elements <g> per processar');
-      return;
+      console.warn('⚠️ No hi ha elements <g> per processar');
+      return false;
     }
 
-    elements.forEach((element, index) => {
-      console.group(`Processant element ${index}:`);
-      console.log('Element:', element);
-      
+    // Processament simplificat
+    elements.forEach(element => {
       if (!element.classList || element.classList.length === 0) {
-        console.warn('Element sense classes, ignorant...');
-        console.groupEnd();
+        element.classList.add('diagram-node'); // Assigna per defecte
+        console.log('➕ Classificat com a node per defecte:', element);
         return;
       }
 
-      console.log('Classes de l\'element:', Array.from(element.classList)); // Punt de control 6
+      const isConnection = Array.from(element.classList).some(cls => 
+        cls.match(/[()→←↔-]/) // Patrons de connexions
+      );
 
-      let classified = false;
-      Array.from(element.classList).forEach(className => {
-        try {
-          // Mètode simplificat per detectar connexions
-          const isConnection = /(\(|->|<-|--|→|←|↔)/.test(className);
-          
-          if (isConnection) {
-            console.log(`Classificant com a CONNEXIÓ: ${className}`);
-            element.classList.add('diagram-connection');
-            this.processConnection(className);
-            classified = true;
-          } else if (className.includes('.')) {
-            console.log(`Classificant com a NODE: ${className}`);
-            element.classList.add('diagram-node');
-            this.processNode(className);
-            classified = true;
-          }
-        } catch (error) {
-          console.warn(`Error processant classe ${className}:`, error);
-        }
-      });
-
-      if (!classified) {
-        console.warn('No s\'ha pogut classificar aquest element');
-      }
-      console.groupEnd();
-    });
-
-    this.markContainers();
-    console.log('📊 Estat final dels maps:', {
-      containerMap: this.containerMap,
-      parentMap: this.parentMap
-    }); // Punt de control 7
-  }
-
-  processConnection(className) {
-    console.log(`Processant connexió: ${className}`); // Punt de control 8
-    try {
-      const parsed = this.parseConnectionID(className);
-      if (!parsed) {
-        console.warn(`No s'ha pogut analitzar la connexió: ${className}`);
-        return;
-      }
-
-      console.log('Connexió analitzada:', parsed);
-
-      if (!this.containerMap.has(parsed.startNode)) {
-        this.containerMap.set(parsed.startNode, { nodes: [], connections: [] });
-      }
-      if (!this.containerMap.has(parsed.endNode)) {
-        this.containerMap.set(parsed.endNode, { nodes: [], connections: [] });
-      }
-
-      this.containerMap.get(parsed.startNode).connections.push(className);
-      this.containerMap.get(parsed.endNode).connections.push(className);
-    } catch (error) {
-      console.error(`Error processant connexió ${className}:`, error);
-    }
-  }
-
-  processNode(className) {
-    console.log(`Processant node: ${className}`); // Punt de control 9
-    const parentName = this.getParentName(className);
-    if (parentName) {
-      console.log(`Node ${className} té parent: ${parentName}`);
-      this.parentMap.set(className, parentName);
-
-      if (!this.containerMap.has(parentName)) {
-        this.containerMap.set(parentName, { nodes: [], connections: [] });
-      }
-      this.containerMap.get(parentName).nodes.push(className);
-    } else {
-      console.log(`Node ${className} no té parent`);
-    }
-  }
-
-  markContainers() {
-    console.log('Marcant contenidors...'); // Punt de control 10
-    this.containerMap.forEach((_, containerID) => {
-      const containerElement = document.querySelector(`.contenidor-svg g.${CSS.escape(containerID)}`);
-      if (containerElement) {
-        console.log(`Afegint classe diagram-container a: ${containerID}`);
-        containerElement.classList.add('diagram-container');
+      if (isConnection) {
+        element.classList.add('diagram-connection');
+        console.log('🔄 Classificat com a connexió:', element);
       } else {
-        console.warn(`No s'ha trobat el contenidor per: ${containerID}`);
+        element.classList.add('diagram-node');
+        console.log('⏹️ Classificat com a node:', element);
+        
+        // Marcar com a contenidor si té fills
+        if (element.querySelector('g, path, rect, circle')) {
+          element.classList.add('diagram-container');
+          console.log('📦 Marcat com a contenidor:', element);
+        }
       }
+    });
+
+    return true;
+  }
+
+  attachEventListeners() {
+    const nodes = document.querySelectorAll('.diagram-node, .diagram-container');
+    console.log(`🎯 Afegint listeners a ${nodes.length} elements`);
+    
+    nodes.forEach(node => {
+      node.addEventListener('mouseenter', () => this.highlightNode(node));
+      node.addEventListener('mouseleave', () => this.resetHighlight());
     });
   }
 
-  // ... (Restaura els altres mètodes de la versió original que necessitis)
-  // Assegura't d'afegir console.log als mètodes highlightNode i resetHighlight
+  highlightNode(nodeElement) {
+    const className = nodeElement.classList.value.split(' ')[0];
+    console.log(`💡 Highlight: ${className}`);
+    
+    // Implementació simplificada per testing
+    document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
+      el.classList.toggle('hidden', !el.classList.contains(className));
+    });
+  }
+
+  resetHighlight() {
+    document.querySelectorAll('.hidden').forEach(el => {
+      el.classList.remove('hidden');
+    });
+  }
 }
 
-// Inicialització amb verificació de càrrega
+// Inicialització amb verificació millorada
 function initInteractiveSVG() {
-  console.log('👀 Comprovant si el SVG està carregat...');
-  const svgCheckInterval = setInterval(() => {
-    const svgContainer = document.querySelector('.contenidor-svg');
-    if (svgContainer && svgContainer.querySelector('g')) {
-      clearInterval(svgCheckInterval);
-      console.log('🎯 SVG trobat, inicialitzant...');
-      window.interactiveSVG = new InteractiveSVG();
-      window.interactiveSVG.init();
-    } else {
-      console.log('Encara no es troba l\'SVG...');
+  console.log('🏁 Iniciant inicialització...');
+  
+  // Versió tolerant a SVG dinàmics
+  const svgObserver = new MutationObserver((mutations, obs) => {
+    const svgContent = document.querySelector('.contenidor-svg g, .contenidor-svg svg');
+    if (svgContent) {
+      console.log('🎯 SVG carregat, procedint...');
+      obs.disconnect();
+      new InteractiveSVG().init();
     }
-  }, 500);
+  });
 
-  // Timeout per evitar bucles infinits
+  svgObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  // Timeout de seguretat
   setTimeout(() => {
-    clearInterval(svgCheckInterval);
+    svgObserver.disconnect();
+    if (!document.querySelector('.diagram-node')) {
+      console.error('⏳ Timeout: No es va detectar SVG carregat');
+    }
   }, 10000);
 }
 
-// Iniciar quan el DOM estigui carregat
-if (document.readyState !== 'loading') {
+// Iniciar
+if (document.readyState === 'complete') {
   initInteractiveSVG();
 } else {
+  window.addEventListener('load', initInteractiveSVG);
   document.addEventListener('DOMContentLoaded', initInteractiveSVG);
-}
+}s
