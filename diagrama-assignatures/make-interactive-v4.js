@@ -23,11 +23,13 @@ function attachSVGEvents() {
 function processSVG() {
     const containerMap = new Map();
     const containerDescendants = new Map();
+    const ignoredContainers = new Set();
     const ignoredClasses = new Set(["shape", "invisible", "semestre", "emplenar-fila"]);
 
-    // PRIMERA PASSADA: Analitzem l’estructura dels contenidors i classifiquem elements
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
-        const classList = element.classList;
+        let classList = element.classList;
+
+        // Ignorar elements amb classes no desitjades
         if (!classList || [...ignoredClasses].some(cls => classList.contains(cls))) return;
 
         const className = classList[0];
@@ -35,6 +37,7 @@ function processSVG() {
 
         const decoded = atob(className);
 
+        // Si l'identificador conté un punt, es tracta d'un contenidor amb subnivells
         if (decoded.includes(".")) {
             const parts = decoded.split(".");
             for (let i = 1; i < parts.length; i++) {
@@ -56,44 +59,25 @@ function processSVG() {
                 containerMap.set(encodedParentID, { nodes: [], connections: [] });
             }
 
-            const localName = parts[parts.length - 1]; // Agafem només la part final
+            // Agafem només la part final de l'identificador per saber si és connexió o node
+            const localName = decoded.split(".").pop();  
             if (localName.startsWith("(")) {
                 containerMap.get(encodedParentID).connections.push(className);
             } else {
                 containerMap.get(encodedParentID).nodes.push(className);
             }
         }
+        // Aquí podríem tractar altres casos si fos necessari
     });
 
-    // SEGONA PASSADA: Assignem classes als elements segons si són nodes, connexions o contenidors
-    document.querySelectorAll(".contenidor-svg g").forEach(element => {
-        const classList = element.classList;
-        if (!classList || [...ignoredClasses].some(cls => classList.contains(cls))) return;
-
-        const className = classList[0];
-        if (!className) return;
-
-        // Connexió
-        const decoded = atob(className);
-        const localName = decoded.split(".").pop();
-
-        const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
-        if (validPrefixes.some(prefix => className.startsWith(prefix))) {
-            element.classList.add("diagram-connection");
-            return;
-        }
-
-        // Node
-        if (!localName.startsWith("(")) {
-            element.classList.add("diagram-node");
-        }
-
-        // Contenidor
-        if (containerDescendants.has(className)) {
-            element.classList.add("diagram-container");
-        }
-    });
+    // Aquí pots afegir el codi que assigna la classe "diagram-container" als elements segons containerMap o containerDescendants.
+    // Per exemple:
+    // containerMap.forEach((value, encodedParentID) => {
+    //     const elements = document.querySelectorAll(`.contenidor-svg g.${encodedParentID}`);
+    //     elements.forEach(el => el.classList.add("diagram-container"));
+    // });
 }
+
 
 
 function collectAllDescendants(containerID, descendants = new Set()) {
