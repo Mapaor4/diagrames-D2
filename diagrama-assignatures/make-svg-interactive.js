@@ -22,8 +22,8 @@ function attachSVGEvents() {
 
 function processSVG() {
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
-        let className = element.getAttribute("class");
-        if (!className || className === "shape" || className == "semestre" || className == "invisible") return;
+        let classList = element.classList;
+        if (!classList || classList.contains("shape") || classList.contains("semestre") || classList.contains("invisible")) return;
 
         const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
