@@ -125,107 +125,70 @@ class InteractiveSVG {
     });
   }
 
-  resaltar(node) {
-    const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
-    if (!classeOriginal) return;
-
-    const nodeDecodificat = this.decodificarBase64(classeOriginal);
-    const elementsAMostrar = new Set([node]);
-    console.group(`Resaltant: ${nodeDecodificat}`);
-
-    // Obtenir connexions directes
-    const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
-    console.log('Connexions trobades:', connexions.map(c => this.decodificarBase64(c.classList[0])));
-    console.log('Nodes relacionats:', nodesRelacionats.map(n => this.decodificarBase64(n.classList[0])));
-
-    connexions.forEach(c => elementsAMostrar.add(c));
-    nodesRelacionats.forEach(n => elementsAMostrar.add(n));
-
-    // Gestió de contenidors
-    if (node.classList.contains('diagram-container')) {
-      const descendents = this.obtenirDescendents(classeOriginal);
-      console.log('Descendents:', descendents.map(d => this.decodificarBase64(d)));
-      
-      descendents.forEach(d => {
-        const element = document.querySelector(`.${CSS.escape(d)}`);
-        if (element) {
-          elementsAMostrar.add(element);
-          const decodificatFill = this.decodificarBase64(d);
-          const { connexions: c, nodesRelacionats: n } = this.obtenirConnexionsRelacionades(decodificatFill);
-          c.forEach(con => elementsAMostrar.add(con));
-          n.forEach(nd => elementsAMostrar.add(nd));
-        }
-      });
-    }
-
-    // Aplicar canvis
-    document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
-      const visible = elementsAMostrar.has(el);
-      el.classList.toggle('hidden', !visible);
-      if (visible) console.log('Mostrant:', this.decodificarBase64(el.classList[0]));
-    });
-
-    console.groupEnd();
-  }
-
   obtenirConnexionsRelacionades(nodeDecodificat) {
     const connexions = new Set();
     const nodesRelacionats = new Set();
-    const partsNode = nodeDecodificat.split('.');
-    const contenidorsNode = this.obtenirJerarquiaCompleta(nodeDecodificat);
 
     this.connexionsMap.forEach((info, classeConnexio) => {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // 1. Comprovació directa
-        const directe = [info.startNode, info.endNode].includes(nodeDecodificat);
+        // Verificar si la connexió involucra DIRECTAMENT el node
+        const involucraDirectament = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
         
-        // 2. Parentiu
-        const esPare = [info.startNode, info.endNode].some(n => 
-            n.startsWith(`${nodeDecodificat}.`)
-        );
-        
-        // 3. Germans
-        const contenidorConnexio = this.obtenirContenidorConnexio(info);
-        const esGerma = contenidorsNode.includes(contenidorConnexio);
-        
-        // 4. Ancestre comú
-        const ancestorMatch = [info.startNode, info.endNode].some(n => 
-            this.teAncestreComu(n, nodeDecodificat)
-        );
+        // Verificar si la connexió és entre fills del node (si és contenidor)
+        const esConnexioInterna = nodeDecodificat === info.startNode.split('.').slice(0, -1).join('.') && 
+                                 nodeDecodificat === info.endNode.split('.').slice(0, -1).join('.');
 
-        if (directe || esPare || esGerma || ancestorMatch) {
+        if (involucraDirectament || esConnexioInterna) {
             connexions.add(elementConnexio);
+            
+            // Afegir NOMÉS els nodes directament connectats
             [info.startNode, info.endNode].forEach(nomNode => {
-                const node = document.querySelector(`.${CSS.escape(this.codificarBase64(nomNode))}`);
+                const classeNode = this.codificarBase64(nomNode);
+                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
                 if (node) nodesRelacionats.add(node);
             });
         }
     });
 
-    return { connexions: Array.from(connexions), nodesRelacionats: Array.from(nodesRelacionats) };
+    return { 
+        connexions: Array.from(connexions), 
+        nodesRelacionats: Array.from(nodesRelacionats) 
+    };
 }
 
-// Helpers addicionals
-obtenirJerarquiaCompleta(nodeDecodificat) {
-    const parts = nodeDecodificat.split('.');
-    return parts.map((_, i) => parts.slice(0, i+1).join('.'));
-}
+resaltar(node) {
+    const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
+    if (!classeOriginal) return;
 
-teAncestreComu(nodeA, nodeB) {
-    const partsA = nodeA.split('.');
-    const partsB = nodeB.split('.');
-    return partsA.some((_, i) => 
-        partsA.slice(0, i+1).join('.') === partsB.slice(0, i+1).join('.')
-    );
-}
+    const nodeDecodificat = this.decodificarBase64(classeOriginal);
+    const elementsAMostrar = new Set([node]);
 
-obtenirContenidorConnexio(info) {
-    const startParts = info.startNode.split('.');
-    const endParts = info.endNode.split('.');
-    const commonDepth = Math.min(startParts.length, endParts.length) - 1;
-    return startParts.slice(0, commonDepth).join('.');
+    // 1. Obtenir connexions directes
+    const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
+    connexions.forEach(c => elementsAMostrar.add(c));
+    nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+
+    // 2. Si és contenidor, afegir fills I LES SEVES CONNEXIONS DIRECTES
+    if (node.classList.contains('diagram-container')) {
+        const descendents = this.obtenirDescendents(classeOriginal);
+        descendents.forEach(d => {
+            const element = document.querySelector(`.${CSS.escape(d)}`);
+            if (element) {
+                // Afegir només si té connexions pròpies
+                const decodificatFill = this.decodificarBase64(d);
+                const { connexions: c, nodesRelacionats: n } = this.obtenirConnexionsRelacionades(decodificatFill);
+                c.forEach(con => elementsAMostrar.add(con));
+                n.forEach(nd => elementsAMostrar.add(nd));
+            }
+        });
+    }
+
+    // Aplicar canvis
+    document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
+        el.classList.toggle('hidden', !elementsAMostrar.has(el));
+    });
 }
 
   obtenirDescendents(classeBase) {
