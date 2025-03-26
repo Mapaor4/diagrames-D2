@@ -65,7 +65,6 @@ class InteractiveSVG {
           }
           this.containerMap.get(classePare).push(classeOriginal);
         }
-        console.log('Node registrat:', { classe: classeOriginal, decodificat });
       }
     });
 
@@ -106,8 +105,11 @@ class InteractiveSVG {
     const tipus = match[3].replace(/&gt;/g, '>');
 
     const generarRutaAbsoluta = (node) => {
-        if (!containerPath) return node; 
+        console.log("Eooo eooo");
+        if (!containerPath) return node;
+        console.log("Oeee");
         if (node.includes('.')) return node; 
+        console.log("Pues tot pinta bé");
         const ruta = `${containerPath}.${node}`;
         console.log(`Convertint ruta relativa: ${node} -> ${ruta}`); // DEBUG
         return ruta;
@@ -155,11 +157,6 @@ class InteractiveSVG {
                            info.endNode.startsWith(`${nodeDecodificat}.`);
 
         if (directe || esGermana || esContenidor) {
-            console.log(`Connexió rellevant: ${info.startNode} -> ${info.endNode}`, { // DEBUG
-                directe,
-                esGermana,
-                esContenidor
-            });
             connexions.add(elementConnexio);
             
             [info.startNode, info.endNode].forEach(nomNode => {
@@ -167,7 +164,6 @@ class InteractiveSVG {
                 const node = document.querySelector(`.${CSS.escape(classeNode)}`);
                 if (node) {
                     nodesRelacionats.add(node);
-                    console.log(`Afegit node: ${nomNode}`); // DEBUG
                 }
             });
         }
@@ -213,8 +209,8 @@ class InteractiveSVG {
         });
 
         // DEBUG
-        console.log('Elements visibles:', Array.from(elementsAMostrar)
-            .map(el => this.decodificarBase64(Array.from(el.classList)[0])));
+        // console.log('Elements visibles:', Array.from(elementsAMostrar)
+        //     .map(el => this.decodificarBase64(Array.from(el.classList)[0])));
     }
 
   // __________________________________________EL QUE VE A CONTINUACIÓ ESTÀ BASTANT BÉ DIRIA____________________________________
