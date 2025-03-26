@@ -1,21 +1,29 @@
-// Opacity transition (global style)
-var style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-style.textContent = `
-    .hidden { opacity: 0.2; transition: opacity 0.3s; }
-    .diagram-node, .diagram-connection { transition: opacity 0.3s; }
-`;
-document.currentScript.parentElement.appendChild(style);
+function attachSVGEvents() {
+    // Afegim els estils dins l’SVG
+    var style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `
+        .hidden { opacity: 0.2; transition: opacity 0.3s; }
+        .diagram-node, .diagram-connection { transition: opacity 0.3s; }
+    `;
+    document.querySelector(".contenidor-svg svg").appendChild(style);
 
-// Make the SVG more readable (classes and IDs)
+    // Processem l’SVG per assignar classes i IDs correctes
+    processSVG();
+
+    // Assignem els events hover als nodes de l’SVG
+    document.querySelectorAll(".diagram-node").forEach(node => {
+        node.addEventListener("mouseover", function() { highlightNode(this.id); });
+        node.addEventListener("mouseout", function() { resetHighlight(); });
+    });
+}
+
 function processSVG() {
-    document.querySelectorAll("g").forEach(element => {
+    document.querySelectorAll(".contenidor-svg g").forEach(element => {
         let className = element.getAttribute("class");
-        if (!className || className === "shape" || className == "semestre" || className == "invisible") return; // ADD CLASSES YOU WANT TO IGNORE!!!!
+        if (!className || className === "shape" || className == "semestre" || className == "invisible") return;
 
-        // Change base64 class to ID
         element.setAttribute("id", className);
 
-        // If it starts with parentesis '(' it's a connection, if not it's probably a node
         const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
             element.setAttribute("class", "diagram-connection");
@@ -35,22 +43,18 @@ function highlightNode(nodeId) {
         let parsed = parseConnectionID(connectionId);
         if (!parsed) return;
 
-        // We check if our node is at the beggining or end of this current connection
         if (parsed.startNode === nodeId || parsed.endNode === nodeId) {
             visibleConnections.add(connectionId);
             connectionTypes.add(parsed.connectionType);
-            // If it is present, it means the other node is a neighbor
             neighbors.add(parsed.startNode);
             neighbors.add(parsed.endNode);
-            // Note: with this we'll have our node also present in the nighbor set. That is actually good, because it simplifies the visibilty condition.
         }
     });
-    console.log("Selected node:", nodeId, " | ", "Neighbors:", neighbors, " | ", "Connection types:", connectionTypes);
 
     document.querySelectorAll(".diagram-node").forEach(node => {
         const id = node.getAttribute("id");
         if (!neighbors.has(id)) {
-            node.classList.add("hidden"); // If it's not a neighbor, it must be hidden.
+            node.classList.add("hidden");
         } else {
             node.classList.remove("hidden");
         }
@@ -73,9 +77,6 @@ function resetHighlight() {
 }
 
 function parseConnectionID(base64ID) {
-    // We extract from the encoded base64 Connection ID the main 3 important things:
-    // 1. Initial node 2. Final node 3. Connection type
-    // Later on for cases with more arrows between the same nodes. This needs to be changed to store the number of the arrow as well.
     try {
         const decodedID = atob(base64ID);
         const match = decodedID.match(/^\((.*?)\)\[\d+\]$/);
@@ -97,12 +98,3 @@ function parseConnectionID(base64ID) {
         return null;
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    processSVG();
-    document.querySelectorAll(".diagram-node").forEach(node => {
-        // Check if a node is hovered over
-        node.addEventListener("mouseover", function() { highlightNode(this.id); });
-        node.addEventListener("mouseout", function() { resetHighlight(); });
-    });
-});
