@@ -41,7 +41,7 @@ class InteractiveSVG {
       if (!classeOriginal) return;
 
       const decodificat = this.decodificarBase64(classeOriginal);
-      console.log("Element decodificat":, decodificat);
+      console.log("Element decodificat:", decodificat);
       
       if (decodificat.startsWith('(')) {
         console.log("Connexio decodificada:", decodificat);
@@ -242,7 +242,7 @@ class InteractiveSVG {
   }
 
   decodificarBase64(str) {
-    console.log("Element codificat":, str);
+    console.log("Element codificat:", str);
     try {
       return decodeURIComponent(escape(atob(str)));
     } catch {
