@@ -69,6 +69,7 @@ function processSVG() {
         }
 
         console.log(`Element processat: ${decoded}, Assignat com: ${element.classList.contains("diagram-connection") ? "Connexió" : "Node"}`);
+        console.log(`Element final: ${element.classList}`);
     });
     
     containerMap.forEach((_, containerID) => {
