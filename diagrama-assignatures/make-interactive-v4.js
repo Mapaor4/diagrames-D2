@@ -23,13 +23,11 @@ function attachSVGEvents() {
 function processSVG() {
     const containerMap = new Map();
     const containerDescendants = new Map();
-    const ignoredContainers = new Set();
     const ignoredClasses = new Set(["shape", "invisible", "semestre", "emplenar-fila"]);
 
+    // PRIMERA PASSADA: Analitzem l’estructura dels contenidors i classifiquem elements
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
-        let classList = element.classList;
-
-        // AFEGIR ELS ELEMENTS A IGNORAR
+        const classList = element.classList;
         if (!classList || [...ignoredClasses].some(cls => classList.contains(cls))) return;
 
         const className = classList[0];
@@ -54,38 +52,49 @@ function processSVG() {
             const parentID = parts[0];
             const encodedParentID = btoa(parentID);
 
-            if (!containerMap.has(encodedParentID)) containerMap.set(encodedParentID, { nodes: [], connections: [] });
+            if (!containerMap.has(encodedParentID)) {
+                containerMap.set(encodedParentID, { nodes: [], connections: [] });
+            }
 
-            if (decoded.startsWith("(")) {
+            const localName = parts[parts.length - 1]; // Agafem només la part final
+            if (localName.startsWith("(")) {
                 containerMap.get(encodedParentID).connections.push(className);
             } else {
                 containerMap.get(encodedParentID).nodes.push(className);
             }
         }
+    });
+
+    // SEGONA PASSADA: Assignem classes als elements segons si són nodes, connexions o contenidors
+    document.querySelectorAll(".contenidor-svg g").forEach(element => {
+        const classList = element.classList;
+        if (!classList || [...ignoredClasses].some(cls => classList.contains(cls))) return;
+
+        const className = classList[0];
+        if (!className) return;
+
+        // Connexió
+        const decoded = atob(className);
+        const localName = decoded.split(".").pop();
 
         const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
             element.classList.add("diagram-connection");
-        } else {
+            return;
+        }
+
+        // Node
+        if (!localName.startsWith("(")) {
             element.classList.add("diagram-node");
         }
+
+        // Contenidor
+        if (containerDescendants.has(className)) {
+            element.classList.add("diagram-container");
+        }
     });
-
-    // Assignar classe "diagram-container" als contenidors detectats (excepte els ignorats)
-    containerMap.forEach((_, containerID) => {
-        const containerElement = document.querySelector(`.contenidor-svg g.${CSS.escape(containerID)}`);
-        if (!containerElement) return;
-
-        const classList = containerElement.classList;
-        if ([...ignoredClasses].some(cls => classList.contains(cls))) return;
-
-        containerElement.classList.add("diagram-container");
-    });
-
-    // Guardar la informació de contenidors globalment
-    window.diagramContainers = containerMap;
-    window.containerDescendants = containerDescendants;
 }
+
 
 function collectAllDescendants(containerID, descendants = new Set()) {
     const direct = window.containerDescendants?.get(containerID);
