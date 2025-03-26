@@ -176,30 +176,46 @@ class InteractiveSVG {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // Normalitzem els noms
-        const normalitzatStart = info.startNode.replace(/&gt;/g, '>');
-        const normalitzatEnd = info.endNode.replace(/&gt;/g, '>');
-        const normalitzatNode = nodeDecodificat.replace(/&gt;/g, '>');
+        // Debug: Mostrem la connexió que s'està avaluant
+        console.log(`Analitzant connexió: ${info.startNode} -> ${info.endNode}`);
 
-        // Comprovem si:
-        // 1. El node és un dels extrems de la connexió
-        // 2. El node és pare d'algun extrem (per connexions internes)
-        const esStart = normalitzatStart === normalitzatNode;
-        const esEnd = normalitzatEnd === normalitzatNode;
-        const esPareDeStart = normalitzatStart.startsWith(`${normalitzatNode}.`);
-        const esPareDeEnd = normalitzatEnd.startsWith(`${normalitzatNode}.`);
+        // Cas 1: El node és directament un extrem de la connexió
+        const esDirecte = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
+        
+        // Cas 2: El node és pare d'algun extrem (per connexions internes)
+        const esPare = info.startNode.startsWith(`${nodeDecodificat}.`) || 
+                      info.endNode.startsWith(`${nodeDecodificat}.`);
+        
+        // Cas 3: El node és fill del mateix contenidor que la connexió
+        const nodeParts = nodeDecodificat.split('.');
+        const esGerma = info.startNode.split('.')[0] === nodeParts[0] && 
+                       info.endNode.split('.')[0] === nodeParts[0] &&
+                       nodeParts.length > 1;
 
-        if (esStart || esEnd || esPareDeStart || esPareDeEnd) {
+        if (esDirecte || esPare || esGerma) {
+            console.log(`Connexió rellevant trobada: ${info.startNode} -> ${info.endNode}`, {
+                esDirecte,
+                esPare,
+                esGerma
+            });
+
             connexions.add(elementConnexio);
             
             // Afegim tots dos nodes de la connexió
-            [info.startNode, info.endNode].forEach(nomNode => {
+            const nodesConnexio = [info.startNode, info.endNode];
+            nodesConnexio.forEach(nomNode => {
                 const classeNode = this.codificarBase64(nomNode);
                 const node = document.querySelector(`.${CSS.escape(classeNode)}`);
-                if (node) nodesRelacionats.add(node);
+                if (node) {
+                    nodesRelacionats.add(node);
+                    console.log(`Afegit node relacionat: ${nomNode}`);
+                }
             });
         }
     });
+
+    console.log(`Connexions trobades per ${nodeDecodificat}:`, 
+        Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])));
 
     return { 
         connexions: Array.from(connexions), 
