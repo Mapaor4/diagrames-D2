@@ -11,7 +11,7 @@ class InteractiveSVG {
       this.processSVG();
       this.attachEventListeners();
       this.initialized = true;
-      console.log('Interactive SVG initialized successfully');
+      console.log('Interactive SVG initialized');
     } catch (error) {
       console.error('Initialization error:', error);
     }
@@ -22,7 +22,6 @@ class InteractiveSVG {
     style.textContent = `
       .hidden { opacity: 0.2; transition: opacity 0.3s; }
       .diagram-node { cursor: pointer; transition: opacity 0.3s; }
-      .diagram-container { cursor: pointer; }
       .diagram-connection { stroke-opacity: 0.6; transition: stroke-opacity 0.3s; }
     `;
     document.head.appendChild(style);
@@ -36,24 +35,24 @@ class InteractiveSVG {
       const originalClass = Array.from(g.classList).find(c => this.isValidBase64(c));
       if (!originalClass) return;
 
-      // Clear any existing diagram classes
+      // Clear existing diagram classes
       g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
 
       const decoded = this.decodeBase64(originalClass);
       const isConnection = decoded.startsWith('(');
-      const parentName = this.getParentName(decoded);
-
+      
       if (isConnection) {
         g.classList.add('diagram-connection');
       } else {
         g.classList.add('diagram-node');
+        const parentName = this.getParentName(decoded);
         if (parentName) {
           this.registerParentChild(originalClass, parentName);
         }
       }
     });
 
-    // Mark containers (elements that have children)
+    // Mark containers after processing all nodes
     this.markContainers();
   }
 
@@ -93,6 +92,10 @@ class InteractiveSVG {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
+  getShortName(decoded) {
+    return decoded.split('.').pop();
+  }
+
   getParentName(decoded) {
     const parts = decoded.split('.');
     return parts.length > 1 ? parts.slice(0, -1).join('.') : null;
@@ -109,7 +112,6 @@ class InteractiveSVG {
     const originalClass = Array.from(node.classList).find(c => this.isValidBase64(c));
     if (!originalClass) return;
 
-    // Highlight logic
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
       const elClass = Array.from(el.classList).find(c => this.isValidBase64(c));
       if (elClass !== originalClass) el.classList.add('hidden');
