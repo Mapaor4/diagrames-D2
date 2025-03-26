@@ -1,5 +1,4 @@
 function attachSVGEvents() {
-    // Afegim els estils dins l’SVG
     var style = document.createElementNS("http://www.w3.org/2000/svg", "style");
     style.textContent = `
         .hidden { opacity: 0.2; transition: opacity 0.3s; }
@@ -7,13 +6,17 @@ function attachSVGEvents() {
     `;
     document.querySelector(".contenidor-svg svg").appendChild(style);
 
-    // Processem l’SVG per assignar classes i IDs correctes
+    // Processem l’SVG per assignar classes correctes
     processSVG();
 
     // Assignem els events hover als nodes de l’SVG
     document.querySelectorAll(".diagram-node").forEach(node => {
-        node.addEventListener("mouseover", function() { highlightNode(this.id); });
-        node.addEventListener("mouseout", function() { resetHighlight(); });
+        node.addEventListener("mouseover", function() {
+            highlightNode(this.classList[0]); // Primer valor de classList és l'identificador en base64
+        });
+        node.addEventListener("mouseout", function() {
+            resetHighlight();
+        });
     });
 }
 
@@ -22,29 +25,27 @@ function processSVG() {
         let className = element.getAttribute("class");
         if (!className || className === "shape" || className == "semestre" || className == "invisible") return;
 
-        element.setAttribute("id", className);
-
         const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
-            element.setAttribute("class", "diagram-connection");
+            element.classList.add("diagram-connection");
         } else {
-            element.setAttribute("class", "diagram-node");
+            element.classList.add("diagram-node");
         }
     });
 }
 
-function highlightNode(nodeId) {
-    let neighbors = new Set([nodeId]);
+function highlightNode(nodeClass) {
+    let neighbors = new Set([nodeClass]);
     let visibleConnections = new Set();
     let connectionTypes = new Set();
 
     document.querySelectorAll(".diagram-connection").forEach(connection => {
-        let connectionId = connection.getAttribute("id");
-        let parsed = parseConnectionID(connectionId);
+        let connectionClass = connection.classList[0]; // Primer valor = identificador únic
+        let parsed = parseConnectionID(connectionClass);
         if (!parsed) return;
 
-        if (parsed.startNode === nodeId || parsed.endNode === nodeId) {
-            visibleConnections.add(connectionId);
+        if (parsed.startNode === nodeClass || parsed.endNode === nodeClass) {
+            visibleConnections.add(connectionClass);
             connectionTypes.add(parsed.connectionType);
             neighbors.add(parsed.startNode);
             neighbors.add(parsed.endNode);
@@ -52,8 +53,8 @@ function highlightNode(nodeId) {
     });
 
     document.querySelectorAll(".diagram-node").forEach(node => {
-        const id = node.getAttribute("id");
-        if (!neighbors.has(id)) {
+        const className = node.classList[0];
+        if (!neighbors.has(className)) {
             node.classList.add("hidden");
         } else {
             node.classList.remove("hidden");
@@ -61,8 +62,8 @@ function highlightNode(nodeId) {
     });
 
     document.querySelectorAll(".diagram-connection").forEach(connection => {
-        const id = connection.getAttribute("id");
-        if (!visibleConnections.has(id)) {
+        const className = connection.classList[0];
+        if (!visibleConnections.has(className)) {
             connection.classList.add("hidden");
         } else {
             connection.classList.remove("hidden");
