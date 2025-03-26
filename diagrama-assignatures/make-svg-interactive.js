@@ -23,9 +23,13 @@ function attachSVGEvents() {
 function processSVG() {
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
         let classList = element.classList;
-        if (!classList || classList.contains("shape") || classList.contains("invisible") || classList.contains("semestre")) return; // Afegir les classes dels contenidors o nodes que es volen ignorar
 
-        const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
+        if (!classList || classList.contains("shape") || classList.contains("invisible") || classList.contains("semestre")) return; // AFEGIR ELS ELEMENTS QUE VULGUIS IGNORAR
+
+        const className = classList[0]; // Agafem la primera classe que és l'identificador en base64 del node o connexió
+        if (!className) return; // Per seguretat
+
+        const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"]; // Si comença amb parentesis és una connexió
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
             element.classList.add("diagram-connection");
         } else {
@@ -33,6 +37,7 @@ function processSVG() {
         }
     });
 }
+
 
 function highlightNode(nodeClass) {
     let neighbors = new Set([nodeClass]);
