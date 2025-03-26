@@ -33,44 +33,48 @@ class InteractiveSVG {
     if (!svg) throw new Error('No es troba el SVG');
 
     svg.querySelectorAll('g').forEach(g => {
-      g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
+        g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
     svg.querySelectorAll('g').forEach(g => {
-      const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
-      if (!classeOriginal) return;
+        const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
+        if (!classeOriginal) return;
 
-      const decodificat = this.decodificarBase64(classeOriginal);
-      console.log("Element decodificat:", decodificat);
-      
-      if (decodificat.startsWith('(')) { // AQUI EL PROBLEMA DE TOT PLEGAT. Tenim element decodificat: "s1.(algebra -&gt; calcul)[0]", i no s'avalua bé
-        console.log("Connexio decodificada:", decodificat);
-        const infoConnexio = this.parsejarConnexio(decodificat);
-        if (infoConnexio) {
-          this.connexionsMap.set(classeOriginal, infoConnexio);
-          g.classList.add('diagram-connection');
-          console.log('Connexió registrada:', infoConnexio);
-        }
-      } else {
-        g.classList.add('diagram-node');
+        const decodificat = this.decodificarBase64(classeOriginal);
+        console.log("Element decodificat:", decodificat);
+
+        // Nova lògica per detectar connexions
         const parts = decodificat.split('.');
-        this.fullHierarchy.set(classeOriginal, parts);
-        
-        if (parts.length > 1) {
-          const nomPare = parts.slice(0, -1).join('.');
-          const classePare = this.codificarBase64(nomPare);
-          this.parentMap.set(classeOriginal, classePare);
-          
-          if (!this.containerMap.has(classePare)) {
-            this.containerMap.set(classePare, []);
-          }
-          this.containerMap.get(classePare).push(classeOriginal);
+        const lastPart = parts[parts.length - 1];
+        const esConnexio = lastPart.startsWith('(');
+
+        if (esConnexio) {
+            console.log("Connexio decodificada:", decodificat);
+            const infoConnexio = this.parsejarConnexio(decodificat);
+            if (infoConnexio) {
+                this.connexionsMap.set(classeOriginal, infoConnexio);
+                g.classList.add('diagram-connection');
+                console.log('Connexió registrada:', infoConnexio);
+            }
+        } else {
+            g.classList.add('diagram-node');
+            this.fullHierarchy.set(classeOriginal, parts);
+            
+            if (parts.length > 1) {
+                const nomPare = parts.slice(0, -1).join('.');
+                const classePare = this.codificarBase64(nomPare);
+                this.parentMap.set(classeOriginal, classePare);
+                
+                if (!this.containerMap.has(classePare)) {
+                    this.containerMap.set(classePare, []);
+                }
+                this.containerMap.get(classePare).push(classeOriginal);
+            }
         }
-      }
     });
 
     this.marcarContenidors();
-  }
+}
 
   marcarContenidors() {
     this.containerMap.forEach((fills, classePare) => {
