@@ -17,6 +17,7 @@
                 document.querySelector(".contenidor-svg").innerHTML = svgContent;
                 if (typeof attachSVGEvents === "function") {
                     attachSVGEvents(); // Cridem la funció d'interacció un cop carregat l’SVG
+                    console.log("Holaaa");
                 }
             })
             .catch(error => console.error("Error carregant l'SVG:", error));
