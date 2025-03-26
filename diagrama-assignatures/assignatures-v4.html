@@ -1,13 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="ca">
 <head>
-<title>Diagrama assignatures v4</title>
-<style>
-</style>
-<!-- <script src="script-interactive.js"></script> -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama assignatures v4</title>
 </head>
-
 <body>
-    <iframe src="assignatures-v4.svg"></iframe>
+    <div class="contenidor-svg"></div>
+
+    <script>
+        fetch("assignatures-v4.svg")
+            .then(response => response.text())
+            .then(svgContent => {
+                document.getElementById("contenidor-svg").innerHTML = svgContent;
+            })
+            .catch(error => console.error("Error carregant l'SVG:", error));
+    </script>
 </body>
 </html>
