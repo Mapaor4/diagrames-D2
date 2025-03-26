@@ -3,8 +3,8 @@ class InteractiveSVG {
     this.containerMap = new Map();
     this.parentMap = new Map();
     this.fullHierarchy = new Map();
-    this.connexionsMap = new Map();  // Mapa de connexions amb la seva informació
-    this.nodeConnexions = new Map(); // Mapa de nodes amb les seves connexions
+    this.connexionsMap = new Map();
+    this.nodeConnexions = new Map();
   }
 
   init() {
@@ -32,18 +32,21 @@ class InteractiveSVG {
     const svg = document.querySelector('.contenidor-svg svg');
     if (!svg) throw new Error('No es troba el SVG');
 
-    // Reiniciar dades
+    // Netejar classes existents
     svg.querySelectorAll('g').forEach(g => {
       g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
-    // Processar elements
+    // Processar nodes i connexions
     svg.querySelectorAll('g').forEach(g => {
       const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
       if (!classeOriginal) return;
 
       const decodificat = this.decodificarBase64(classeOriginal);
       const esConnexio = decodificat.startsWith('(');
+
+      // Assignar classe bàsica
+      g.classList.add(esConnexio ? 'diagram-connection' : 'diagram-node');
 
       if (esConnexio) {
         this.processarConnexio(g, classeOriginal, decodificat);
@@ -52,12 +55,11 @@ class InteractiveSVG {
       }
     });
 
+    // Marcar contenidors
     this.marcarContenidors();
   }
 
   processarNode(g, classeOriginal, decodificat) {
-    g.classList.add('diagram-node');
-    
     const parts = decodificat.split('.');
     this.fullHierarchy.set(classeOriginal, parts);
     
@@ -74,14 +76,12 @@ class InteractiveSVG {
   }
 
   processarConnexio(g, classeOriginal, decodificat) {
-    g.classList.add('diagram-connection');
-    
     const infoConnexio = this.parsejarConnexio(decodificat);
     if (!infoConnexio) return;
 
     this.connexionsMap.set(classeOriginal, infoConnexio);
     
-    // Registrar connexions pels nodes involucrats
+    // Registrar connexions pels nodes
     const startClass = this.codificarBase64(infoConnexio.start);
     const endClass = this.codificarBase64(infoConnexio.end);
     
@@ -96,7 +96,9 @@ class InteractiveSVG {
   marcarContenidors() {
     this.containerMap.forEach((fills, classePare) => {
       const elementPare = document.querySelector(`.${CSS.escape(classePare)}`);
-      if (elementPare) elementPare.classList.add('diagram-container');
+      if (elementPare && elementPare.classList.contains('diagram-node')) {
+        elementPare.classList.add('diagram-container');
+      }
     });
   }
 
@@ -122,6 +124,7 @@ class InteractiveSVG {
 
     // Gestió de connexions i veïns
     if (!esContenidor) {
+      // Node normal: mostrar connexions directes i veïns
       const connexions = this.nodeConnexions.get(classeOriginal) || [];
       
       connexions.forEach(connexioClasse => {
@@ -129,7 +132,7 @@ class InteractiveSVG {
         if (connexio) {
           elementsAMostrar.add(connexio);
           
-          // Afegir nodes veïns
+          // Afegir node veí
           const info = this.connexionsMap.get(connexioClasse);
           if (info) {
             const altreNode = info.start === nodeDecodificat ? info.end : info.start;
@@ -140,13 +143,16 @@ class InteractiveSVG {
         }
       });
     } else {
-      // Gestió de contenidors
+      // Contenidor: mostrar tota la descendència i connexions internes
       const descendents = this.obtenirDescendents(classeOriginal);
       descendents.forEach(d => {
         const element = document.querySelector(`.${CSS.escape(d)}`);
         if (element) {
           elementsAMostrar.add(element);
-          this.nodeConnexions.get(d)?.forEach(c => {
+          
+          // Afegir connexions dels fills
+          const connexionsFill = this.nodeConnexions.get(d) || [];
+          connexionsFill.forEach(c => {
             const connexio = document.querySelector(`.${CSS.escape(c)}`);
             if (connexio) elementsAMostrar.add(connexio);
           });
@@ -154,7 +160,7 @@ class InteractiveSVG {
       });
     }
 
-    // Aplicar canvis
+    // Aplicar canvis visuals
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
       el.classList.toggle('hidden', !elementsAMostrar.has(el));
     });
@@ -211,6 +217,11 @@ class InteractiveSVG {
 }
 
 // Inicialització
+function attachSVGEvents() {
+  new InteractiveSVG().init();
+}
+
+// Inicialització per si falla la crida manual
 document.addEventListener('DOMContentLoaded', () => {
   if (document.querySelector('.contenidor-svg svg')) {
     new InteractiveSVG().init();
