@@ -30,12 +30,10 @@ class InteractiveSVG {
     const svg = document.querySelector('.contenidor-svg svg');
     if (!svg) throw new Error('No es troba el SVG');
 
-    // Netejar classes existents
     svg.querySelectorAll('g').forEach(g => {
       g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
-    // Processar elements
     svg.querySelectorAll('g').forEach(g => {
       const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
       if (!classeOriginal) return;
@@ -47,8 +45,7 @@ class InteractiveSVG {
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
           g.classList.add('diagram-connection');
-        } else {
-          console.warn('Connexió no reconeguda:', decodificat);
+          console.log('Connexió registrada:', infoConnexio);
         }
       } else {
         g.classList.add('diagram-node');
@@ -65,6 +62,7 @@ class InteractiveSVG {
           }
           this.containerMap.get(classePare).push(classeOriginal);
         }
+        console.log('Node registrat:', { classe: classeOriginal, decodificat });
       }
     });
 
@@ -75,29 +73,27 @@ class InteractiveSVG {
     const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
-    if (!match) return null;
+    if (!match) {
+      console.warn('Connexió no reconeguda:', decodificat);
+      return null;
+    }
     
     const containerPath = match[1] || '';
     const tipus = match[3].replace(/&gt;/g, '>');
 
-    // Funció millorada per crear rutes absolutes
     const resoldreRuta = (node, container) => {
-      if (node.startsWith(container + '.')) return node; // Ja és absoluta
-      if (container && !node.includes('.')) return `${container}.${node}`;
-      return node;
+      if (node.includes('.') || !container) return node;
+      return `${container}.${node}`;
     };
 
     const startNode = resoldreRuta(match[2].trim(), containerPath);
     const endNode = resoldreRuta(match[6].trim(), containerPath);
 
-    console.log('Connexió processada:', {
-      original: decodificat,
-      start: startNode,
-      end: endNode,
-      container: containerPath
-    });
-
-    return { startNode, tipus, endNode };
+    return {
+      startNode: startNode,
+      tipus: tipus,
+      endNode: endNode
+    };
   }
 
   marcarContenidors() {
@@ -125,16 +121,21 @@ class InteractiveSVG {
 
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
     const elementsAMostrar = new Set([node]);
+    console.group(`Resaltant: ${nodeDecodificat}`);
 
     // Obtenir connexions directes
     const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
-    
+    console.log('Connexions trobades:', connexions.map(c => this.decodificarBase64(c.classList[0])));
+    console.log('Nodes relacionats:', nodesRelacionats.map(n => this.decodificarBase64(n.classList[0])));
+
     connexions.forEach(c => elementsAMostrar.add(c));
     nodesRelacionats.forEach(n => elementsAMostrar.add(n));
 
-    // Si és contenidor, afegir fills i connexions
+    // Gestió de contenidors
     if (node.classList.contains('diagram-container')) {
       const descendents = this.obtenirDescendents(classeOriginal);
+      console.log('Descendents:', descendents.map(d => this.decodificarBase64(d)));
+      
       descendents.forEach(d => {
         const element = document.querySelector(`.${CSS.escape(d)}`);
         if (element) {
@@ -149,8 +150,12 @@ class InteractiveSVG {
 
     // Aplicar canvis
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
-      el.classList.toggle('hidden', !elementsAMostrar.has(el));
+      const visible = elementsAMostrar.has(el);
+      el.classList.toggle('hidden', !visible);
+      if (visible) console.log('Mostrant:', this.decodificarBase64(el.classList[0]));
     });
+
+    console.groupEnd();
   }
 
   obtenirConnexionsRelacionades(nodeDecodificat) {
@@ -161,22 +166,15 @@ class InteractiveSVG {
       const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
       if (!elementConnexio) return;
 
-      // Verifiquem ambdós nodes de la connexió
-      const [nodeA, nodeB] = [info.startNode, info.endNode];
-      
-      // Mirem si el node actual és pare de qualsevol dels nodes de la connexió
-      const esParentA = nodeA.startsWith(nodeDecodificat + '.');
-      const esParentB = nodeB.startsWith(nodeDecodificat + '.');
-      
-      if (nodeA === nodeDecodificat || 
-          nodeB === nodeDecodificat || 
-          esParentA || 
-          esParentB) {
-        
+      const startMatch = info.startNode === nodeDecodificat;
+      const endMatch = info.endNode === nodeDecodificat;
+      const esConte = info.startNode.startsWith(`${nodeDecodificat}.`) || 
+                     info.endNode.startsWith(`${nodeDecodificat}.`);
+
+      if (startMatch || endMatch || esConte) {
         connexions.add(elementConnexio);
         
-        // Afegim tots dos nodes de la connexió
-        [nodeA, nodeB].forEach(nomNode => {
+        [info.startNode, info.endNode].forEach(nomNode => {
           const classeNode = this.codificarBase64(nomNode);
           const node = document.querySelector(`.${CSS.escape(classeNode)}`);
           if (node) nodesRelacionats.add(node);
@@ -184,7 +182,10 @@ class InteractiveSVG {
       }
     });
 
-    return { connexions: Array.from(connexions), nodesRelacionats: Array.from(nodesRelacionats) };
+    return { 
+      connexions: Array.from(connexions), 
+      nodesRelacionats: Array.from(nodesRelacionats) 
+    };
   }
 
   obtenirDescendents(classeBase) {
