@@ -69,31 +69,6 @@ class InteractiveSVG {
     this.marcarContenidors();
   }
 
-  parsejarConnexio(decodificat) {
-    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
-    const match = decodificat.match(regex);
-    
-    if (!match) {
-        console.warn('Connexió no reconeguda:', decodificat);
-        return null;
-    }
-
-    const containerPath = match[1] || '';
-    const tipus = match[3].replace(/&gt;/g, '>');
-
-    // Funció per generar rutes absolutes
-    const generarRutaAbsoluta = (node) => {
-        if (!containerPath) return node; // Connexió global
-        if (node.includes('.')) return node; // Ja és absoluta
-        return `${containerPath}.${node}`; // Connexió relativa
-    };
-
-    const startNode = generarRutaAbsoluta(match[2].trim());
-    const endNode = generarRutaAbsoluta(match[6].trim());
-
-    return { startNode, tipus, endNode };
-}
-
   marcarContenidors() {
     this.containerMap.forEach((fills, classePare) => {
       const elementPare = document.querySelector(`.${CSS.escape(classePare)}`);
@@ -113,38 +88,82 @@ class InteractiveSVG {
     });
   }
 
+  parsejarConnexio(decodificat) {
+    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
+    const match = decodificat.match(regex);
+    
+    if (!match) {
+        console.warn('Connexió no reconeguda:', decodificat);
+        return null;
+    }
+
+    const containerPath = match[1] || '';
+    const tipus = match[3].replace(/&gt;/g, '>');
+
+    const generarRutaAbsoluta = (node) => {
+        if (!containerPath) return node; 
+        if (node.includes('.')) return node; 
+        const ruta = `${containerPath}.${node}`;
+        console.log(`Convertint ruta relativa: ${node} -> ${ruta}`); // DEBUG
+        return ruta;
+    };
+
+    const startNode = generarRutaAbsoluta(match[2].trim());
+    const endNode = generarRutaAbsoluta(match[6].trim());
+
+    console.log('Connexió analitzada:', { // DEBUG
+        original: decodificat,
+        start: startNode,
+        end: endNode,
+        contenidor: containerPath
+    });
+
+    return { startNode, tipus, endNode };
+}
+
   obtenirConnexionsRelacionades(nodeDecodificat) {
     const connexions = new Set();
     const nodesRelacionats = new Set();
-
-    // Obtenir el camí del contenidor pare
     const parts = nodeDecodificat.split('.');
     const contenidorPare = parts.length > 1 ? parts.slice(0, -1).join('.') : nodeDecodificat;
+
+    console.log(`\nAnalitzant node: ${nodeDecodificat}`); // DEBUG
+    console.log(`Contenidor pare: ${contenidorPare}`); // DEBUG
 
     this.connexionsMap.forEach((info, classeConnexio) => {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // 1. Connexió directa
-        const directe = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
-        
-        // 2. Connexió germana (mateix contenidor pare)
         const startContainer = info.startNode.split('.').slice(0, -1).join('.');
         const endContainer = info.endNode.split('.').slice(0, -1).join('.');
         const esGermana = startContainer === endContainer && startContainer === contenidorPare;
 
-        // 3. Connexió interna (node és contenidor dels dos extrems)
+        console.log(`Connexió: ${info.startNode} -> ${info.endNode}`, { // DEBUG
+            startContainer,
+            endContainer,
+            esGermana,
+            contenidorPare
+        });
+
+        const directe = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
         const esContenidor = info.startNode.startsWith(`${nodeDecodificat}.`) && 
                            info.endNode.startsWith(`${nodeDecodificat}.`);
 
         if (directe || esGermana || esContenidor) {
+            console.log(`Connexió rellevant: ${info.startNode} -> ${info.endNode}`, { // DEBUG
+                directe,
+                esGermana,
+                esContenidor
+            });
             connexions.add(elementConnexio);
             
-            // Afegir nodes relacionats
             [info.startNode, info.endNode].forEach(nomNode => {
                 const classeNode = this.codificarBase64(nomNode);
                 const node = document.querySelector(`.${CSS.escape(classeNode)}`);
-                if (node) nodesRelacionats.add(node);
+                if (node) {
+                    nodesRelacionats.add(node);
+                    console.log(`Afegit node: ${nomNode}`); // DEBUG
+                }
             });
         }
     });
