@@ -29,7 +29,20 @@ function processSVG() {
         const className = classList[0];
         if (!className) return;
         
-        const decoded = atob(className);
+        // Comprovem si la classe és base64 vàlida
+        if (!isValidBase64(className)) {
+            console.warn(`Classe ignorada (no és base64 vàlid): ${className}`);
+            return;
+        }
+        
+        let decoded;
+        try {
+            decoded = atob(className);
+        } catch (error) {
+            console.error(`Error descodificant ${className}:`, error);
+            return;
+        }
+        
         let shortName = decoded.includes(".") ? decoded.split(".").pop() : decoded;
         let encodedShortName = btoa(shortName);
         
@@ -148,4 +161,12 @@ function parseConnectionID(base64ID) {
 function getParent(decodedID) {
     if (!decodedID.includes(".")) return null;
     return decodedID.split(".").slice(0, -1).join(".");
+}
+
+function isValidBase64(str) {
+    try {
+        return btoa(atob(str)) === str;
+    } catch (e) {
+        return false;
+    }
 }
