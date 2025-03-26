@@ -43,8 +43,8 @@ class InteractiveSVG {
         const decodificat = this.decodificarBase64(classeOriginal);
         console.log("Element decodificat:", decodificat);
 
-        // Nova lògica de detecció amb regex
-        const esConnexio = /\([^)]+\s[-<>&]+\s[^)]+\)\[\d+\]$/.test(decodificat);
+        // Detectar si és connexió analitzant l'estructura general
+        const esConnexio = /\(.*\s[-<>&]+\s.*\)\[\d+\]$/.test(decodificat);
 
         if (esConnexio) {
             console.log("Connexio detectada:", decodificat);
@@ -53,6 +53,8 @@ class InteractiveSVG {
                 this.connexionsMap.set(classeOriginal, infoConnexio);
                 g.classList.add('diagram-connection');
                 console.log('Connexió registrada:', infoConnexio);
+            } else {
+                console.warn("No s'ha pogut parsejar la connexió:", decodificat);
             }
         } else {
             g.classList.add('diagram-node');
@@ -97,7 +99,8 @@ class InteractiveSVG {
   // ____________________________________________________-AIXO NO ACABA D'ESTAR BÉ________________________________________________________
 
   parsejarConnexio(decodificat) {
-    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
+    // Regex millorat per capturar tots els casos
+    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*([-<>&]+)\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
     if (!match) {
@@ -106,30 +109,32 @@ class InteractiveSVG {
     }
 
     const containerPath = match[1] || '';
-    const tipus = match[3].replace(/&gt;/g, '>');
+    const tipus = match[3].replace(/&gt;/g, '>'); // Normalitza a '>'
 
+    // Funció per generar rutes absolutes
     const generarRutaAbsoluta = (node) => {
-        console.log("Eooo eooo");
-        if (!containerPath) return node;
-        console.log("Oeee");
-        if (node.includes('.')) return node; 
-        console.log("Pues tot pinta bé");
-        const ruta = `${containerPath}.${node}`;
-        console.log(`Convertint ruta relativa: ${node} -> ${ruta}`); // DEBUG
-        return ruta;
+        // Si ja és absoluta o no hi ha contenidor pare
+        if (node.includes('.') || !containerPath) return node;
+        // Converteix a ruta absoluta
+        return `${containerPath}.${node}`;
     };
 
     const startNode = generarRutaAbsoluta(match[2].trim());
-    const endNode = generarRutaAbsoluta(match[6].trim());
+    const endNode = generarRutaAbsoluta(match[4].trim()); // Fix: match[4] en lloc de match[6]
 
-    console.log('Connexió analitzada:', { // DEBUG
+    console.log('Connexió analitzada:', {
         original: decodificat,
         start: startNode,
         end: endNode,
-        contenidor: containerPath
+        contenidor: containerPath,
+        tipus: tipus
     });
 
-    return { startNode, tipus, endNode };
+    return { 
+        startNode, 
+        tipus, 
+        endNode 
+    };
 }
 
   obtenirConnexionsRelacionades(nodeDecodificat) {
