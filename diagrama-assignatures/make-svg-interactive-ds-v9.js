@@ -11,9 +11,8 @@ class InteractiveSVG {
       this.afegirEstils();
       this.processarSVG();
       this.afegirListeners();
-      console.log('Interactivitat activada');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Initialization error:', error);
     }
   }
 
@@ -113,6 +112,57 @@ class InteractiveSVG {
     });
   }
 
+  obtenirConnexionsRelacionades(nodeDecodificat) {
+    const connexions = new Set();
+    const nodesRelacionats = new Set();
+    let debugOutput = false;
+
+    // Only debug for specific problematic nodes
+    if (['s1.algebra', 's2.calculII', 's3.metodesI.probabilitat'].includes(nodeDecodificat)) {
+      console.log(`Debugging connections for node: ${nodeDecodificat}`);
+      debugOutput = true;
+    }
+
+    this.connexionsMap.forEach((info, classeConnexio) => {
+      const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+      if (!elementConnexio) return;
+
+      const startMatch = info.startNode === nodeDecodificat;
+      const endMatch = info.endNode === nodeDecodificat;
+      const containsNode = info.startNode.includes(nodeDecodificat) || info.endNode.includes(nodeDecodificat);
+
+      if (startMatch || endMatch || containsNode) {
+        if (debugOutput) {
+          console.log(`Found connection: ${info.startNode} -> ${info.endNode}`);
+        }
+
+        connexions.add(elementConnexio);
+        
+        // Add both connected nodes
+        [info.startNode, info.endNode].forEach(nomNode => {
+          const classeNode = this.codificarBase64(nomNode);
+          const node = document.querySelector(`.${CSS.escape(classeNode)}`);
+          if (node) {
+            nodesRelacionats.add(node);
+            if (debugOutput) {
+              console.log(`Adding related node: ${nomNode}`);
+            }
+          }
+        });
+      }
+    });
+
+    if (debugOutput) {
+      console.log('Total connections found:', connexions.size);
+      console.log('Total related nodes found:', nodesRelacionats.size);
+    }
+
+    return { 
+      connexions: Array.from(connexions), 
+      nodesRelacionats: Array.from(nodesRelacionats) 
+    };
+  }
+
   resaltar(node) {
     const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
     if (!classeOriginal) return;
@@ -120,61 +170,51 @@ class InteractiveSVG {
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
     const elementsAMostrar = new Set([node]);
 
-    // Obtenir totes les connexions relacionades
-    const connexionsRelacionades = this.obtenirConnexionsRelacionades(nodeDecodificat);
+    // Debug only for problematic nodes
+    const debugNodes = ['s1.algebra', 's2.calculII', 's3.metodesI.probabilitat'];
+    const debugMode = debugNodes.includes(nodeDecodificat);
     
-    connexionsRelacionades.connexions.forEach(c => elementsAMostrar.add(c));
-    connexionsRelacionades.nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+    if (debugMode) {
+      console.group(`Highlighting node: ${nodeDecodificat}`);
+      console.log('Base64 class:', classeOriginal);
+    }
 
-    // Si és contenidor, afegir fills i les seves connexions
+    const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
+    
+    if (debugMode) {
+      console.log('Direct connections:', connexions.length);
+      console.log('Related nodes:', nodesRelacionats.map(n => this.decodificarBase64(Array.from(n.classList)[0])));
+    }
+
+    connexions.forEach(c => elementsAMostrar.add(c));
+    nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+
     if (node.classList.contains('diagram-container')) {
       const descendents = this.obtenirDescendents(classeOriginal);
+      
+      if (debugMode) {
+        console.log('Container descendants:', descendents.map(d => this.decodificarBase64(d)));
+      }
+
       descendents.forEach(d => {
         const element = document.querySelector(`.${CSS.escape(d)}`);
         if (element) {
           elementsAMostrar.add(element);
           const decodificatFill = this.decodificarBase64(d);
-          const connexionsFill = this.obtenirConnexionsRelacionades(decodificatFill);
-          connexionsFill.connexions.forEach(c => elementsAMostrar.add(c));
-          connexionsFill.nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+          const { connexions: c, nodesRelacionats: n } = this.obtenirConnexionsRelacionades(decodificatFill);
+          c.forEach(con => elementsAMostrar.add(con));
+          n.forEach(nd => elementsAMostrar.add(nd));
         }
       });
     }
 
-    // Aplicar canvis
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
       el.classList.toggle('hidden', !elementsAMostrar.has(el));
     });
-  }
 
-  obtenirConnexionsRelacionades(nodeDecodificat) {
-    const connexions = new Set();
-    const nodesRelacionats = new Set();
-
-    this.connexionsMap.forEach((info, classeConnexio) => {
-      const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
-      if (!elementConnexio) return;
-
-      const startClass = this.codificarBase64(info.startNode);
-      const endClass = this.codificarBase64(info.endNode);
-      
-      const nodeStart = document.querySelector(`.${CSS.escape(startClass)}`);
-      const nodeEnd = document.querySelector(`.${CSS.escape(endClass)}`);
-
-      const involucraNode = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
-      const esConte = info.startNode.startsWith(nodeDecodificat + '.') || info.endNode.startsWith(nodeDecodificat + '.');
-
-      if (involucraNode || esConte) {
-        connexions.add(elementConnexio);
-        if (nodeStart) nodesRelacionats.add(nodeStart);
-        if (nodeEnd) nodesRelacionats.add(nodeEnd);
-      }
-    });
-
-    return {
-      connexions: Array.from(connexions),
-      nodesRelacionats: Array.from(nodesRelacionats)
-    };
+    if (debugMode) {
+      console.groupEnd();
+    }
   }
 
   obtenirDescendents(classeBase) {
