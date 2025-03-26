@@ -1,4 +1,6 @@
 class InteractiveSVG {
+
+  // ______________________________________________TOT AIXÒ ESTÀ BÉ_______________________________________________
   constructor() {
     this.containerMap = new Map();
     this.parentMap = new Map();
@@ -41,6 +43,7 @@ class InteractiveSVG {
       const decodificat = this.decodificarBase64(classeOriginal);
       
       if (decodificat.startsWith('(')) {
+        console.log("decodificat:", decodificat);
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
@@ -87,6 +90,8 @@ class InteractiveSVG {
       node.addEventListener('mouseout', () => this.reiniciar());
     });
   }
+
+  // ____________________________________________________-AIXO NO ACABA D'ESTAR BÉ________________________________________________________
 
   parsejarConnexio(decodificat) {
     const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
@@ -212,6 +217,8 @@ class InteractiveSVG {
             .map(el => this.decodificarBase64(Array.from(el.classList)[0])));
     }
 
+  // __________________________________________EL QUE VE A CONTINUACIÓ ESTÀ BASTANT BÉ DIRIA____________________________________
+  
   obtenirDescendents(classeBase) {
     const descendents = new Set();
     const cua = [classeBase];
