@@ -23,7 +23,7 @@ function attachSVGEvents() {
 function processSVG() {
     document.querySelectorAll(".contenidor-svg g").forEach(element => {
         let classList = element.classList;
-        if (!classList || classList.contains("shape") || classList.contains("semestre") || classList.contains("invisible")) return;
+        if (!classList || classList.contains("shape") || classList.contains("invisible") || classList.contains("semestre")) return; // Afegir les classes dels contenidors o nodes que es volen ignorar
 
         const validPrefixes = ["KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KI", "KJ", "KK", "KL", "KM", "KN", "KO", "KP"];
         if (validPrefixes.some(prefix => className.startsWith(prefix))) {
