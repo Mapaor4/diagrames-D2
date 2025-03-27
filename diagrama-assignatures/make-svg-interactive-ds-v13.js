@@ -43,8 +43,10 @@ class InteractiveSVG {
         const decodificat = this.decodificarBase64(classeOriginal);
         console.log("Element decodificat:", decodificat);
 
-        // Detectar si és connexió analitzant l'estructura general
-        const esConnexio = /\(.*\s[-<>&]+\s.*\)\[\d+\]$/.test(decodificat);
+        // LÒGICA CLAU CORREGIDA: Detectar connexions per l'últim segment
+        const parts = decodificat.split('.');
+        const lastPart = parts[parts.length - 1];
+        const esConnexio = lastPart.startsWith('('); // <--- Canvi crític
 
         if (esConnexio) {
             console.log("Connexio detectada:", decodificat);
@@ -55,6 +57,7 @@ class InteractiveSVG {
                 console.log('Connexió registrada:', infoConnexio);
             } else {
                 console.warn("No s'ha pogut parsejar la connexió:", decodificat);
+                g.classList.add('diagram-node'); // Fallback per si hi ha errors
             }
         } else {
             g.classList.add('diagram-node');
