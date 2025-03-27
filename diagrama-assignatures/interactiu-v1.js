@@ -73,6 +73,7 @@ class InteractiveSVG {
       
       if (decodificat.startsWith('(')) {  // EL PROBLEMA ESTÀ AQUÍ
         console.log("Connexio descodificada (TROBADA):", decodificat);
+        // Un cop hagim entrat aqui dins. Crear una segona funcio anomenada "parsejarConnexioInterna"
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
