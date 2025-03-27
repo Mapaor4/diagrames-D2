@@ -62,13 +62,21 @@ class InteractiveSVG {
       if (!classeOriginal) return;
 
       const decodificat = this.decodificarBase64(classeOriginal);
+      console.log("Element descodificat:", descodificat);
+
+      /* LÒGICA A SEGUIR: 
+      1. Si l'identificador té un punt '.' quedar-se amb la part de darrera l'últim punt
+      2. Si aquesta última expressió comença per parèntesis -> és connexió
+      3. Si no, és node.
+      
+      */
       
       if (decodificat.startsWith('(')) {  // EL PROBLEMA ESTÀ AQUÍ
+        console.log("Connexio descodificada (TROBADA):", descodificat);
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
           g.classList.add('diagram-connection');
-          console.log('Connexió registrada:', infoConnexio);
         }
       } else {
         g.classList.add('diagram-node');
