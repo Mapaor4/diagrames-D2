@@ -221,6 +221,33 @@ class InteractiveSVG {
   
   // ____________________TOT EL QUE QUEDA FUNCIONA PERFECTAMENT:______________________
 
+  function passarARutaAbsoluta(identificador) {
+    const expressio_regex = /(.*)\.\((\w+)\s*->\s*(\w+)\)\[(\d+)\]/;  
+    // Detectem un punt '.' i una fletxa '->' per tal de separar l'expressió en 3.
+    // Les tres expressions extretes seran: "ruta contenidor pare", "primer node", "segon node".
+    const match = identificador.match(expressio_regex);
+
+    if (!match) return identificador;
+
+    const prefix = match[1];  // Ruta abans del node
+    const node1 = match[2];   // Primer node
+    const node2 = match[3];   // Segon node
+    const index = match[4];   // Índex entre claudàtors (per si ho volem implementar més endavant)
+
+    // Construïm la nova expressió amb rutes absolutes
+    return `(${prefix}.${node1} -> ${prefix}.${node2})[${index}]`;
+}
+
+function mirarSiEsInterna(identificador) {
+    const index = identificador.indexOf(".("); // Busquem a quina posició hi ha un ".("
+    if (index === -1) { 
+        return identificador; // Si no hi ha ".(", retornem el mateix identificador
+    }
+    // El nou identificador és que hi ha després del primer parèntesi '('
+    return identificador.slice(index + 1);
+}
+
+
   obtenirDescendents(classeBase) {
     const descendents = new Set();
     const cua = [classeBase];
