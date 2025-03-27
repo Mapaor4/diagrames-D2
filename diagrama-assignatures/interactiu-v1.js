@@ -62,7 +62,7 @@ class InteractiveSVG {
       if (!classeOriginal) return;
 
       const decodificat = this.decodificarBase64(classeOriginal);
-      console.log("Element descodificat:", descodificat);
+      console.log("Element descodificat:", decodificat);
 
       /* LÒGICA A SEGUIR: 
       1. Si l'identificador té un punt '.' quedar-se amb la part de darrera l'últim punt
@@ -72,7 +72,7 @@ class InteractiveSVG {
       */
       
       if (decodificat.startsWith('(')) {  // EL PROBLEMA ESTÀ AQUÍ
-        console.log("Connexio descodificada (TROBADA):", descodificat);
+        console.log("Connexio descodificada (TROBADA):", decodificat);
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
