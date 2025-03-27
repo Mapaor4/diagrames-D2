@@ -32,43 +32,41 @@ class InteractiveSVG {
     const svg = document.querySelector('.contenidor-svg svg');
     if (!svg) throw new Error('No es troba el SVG');
 
-    // Netejar classes existents
     svg.querySelectorAll('g').forEach(g => {
         g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
-    // Processar cada element
     svg.querySelectorAll('g').forEach(g => {
         const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;
 
         const decodificat = this.decodificarBase64(classeOriginal);
-        console.log("Processant:", decodificat);
+        console.log("Element decodificat:", decodificat);
 
-        // LÒGICA CLAU: Detectar connexions pel DARRER segment
-        const parts = decodificat.split('.');
-        const ultimSegment = parts[parts.length - 1];
-        const esConnexio = ultimSegment.startsWith('('); 
+        // 1. Detecció INFAL·LIBLE de connexions: qualsevol presència de '( ... )'
+        const esConnexio = /\([^\)]+\s*[-<>&]+\s*[^\)]+\)/.test(decodificat);
 
         if (esConnexio) {
-            console.log("✅ És connexió:", decodificat);
-            const info = this.parsejarConnexio(decodificat);
-            if (info) {
-                this.connexionsMap.set(classeOriginal, info);
+            console.log("Connexio detectada:", decodificat);
+            const infoConnexio = this.parsejarConnexio(decodificat);
+            if (infoConnexio) {
+                this.connexionsMap.set(classeOriginal, infoConnexio);
                 g.classList.add('diagram-connection');
+                console.log('Connexió registrada:', infoConnexio);
             } else {
-                console.warn("⚠️ No s'ha pogut parsejar:", decodificat);
-                g.classList.add('diagram-node'); // Fallback
+                console.error("Error parsejant connexió:", decodificat);
+                g.classList.add('diagram-node'); // Fallback segur
             }
         } else {
-            console.log("🔵 És node:", decodificat);
             g.classList.add('diagram-node');
-            // Registrar jerarquia
+            const parts = decodificat.split('.');
             this.fullHierarchy.set(classeOriginal, parts);
+            
             if (parts.length > 1) {
                 const nomPare = parts.slice(0, -1).join('.');
                 const classePare = this.codificarBase64(nomPare);
                 this.parentMap.set(classeOriginal, classePare);
+                
                 if (!this.containerMap.has(classePare)) {
                     this.containerMap.set(classePare, []);
                 }
@@ -82,28 +80,36 @@ class InteractiveSVG {
 
 parsejarConnexio(decodificat) {
     // Regex optimitzat per tots els casos
-    const regex = /^(?:([\w.]+)\.)?\(([\w-]+)\s*([-><]+|&gt;)\s*([\w-]+)\)\[\d+\]$/;
+    const regex = /^(?:([\w.]+)\.?)?\(([\w.-]+)\s*([-<>&]+)\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
-
+    
     if (!match) {
-        console.error("❌ Format de connexió invàlid:", decodificat);
+        console.warn('Connexió no reconeguda:', decodificat);
         return null;
     }
 
-    const contenidor = match[1] || '';
-    const start = match[2].trim();
-    const tipus = match[3].replace(/&gt;/g, '>');
-    const end = match[4].trim();
+    const containerPath = match[1] || '';
+    const tipus = match[3].replace(/&gt;/g, '>').trim(); // Normalitza fletxes
 
-    // Generar rutes absolutes
-    const startNode = contenidor ? `${contenidor}.${start}` : start;
-    const endNode = contenidor ? `${contenidor}.${end}` : end;
-
-    return {
-        startNode: startNode,
-        tipus: tipus,
-        endNode: endNode
+    const generarRutaAbsoluta = (node) => {
+        // Si el node ja és absolut o no hi ha contenidor, retorna directament
+        return (containerPath && !node.includes('.')) 
+            ? `${containerPath}.${node}`
+            : node;
     };
+
+    const startNode = generarRutaAbsoluta(match[2].trim());
+    const endNode = generarRutaAbsoluta(match[4].trim());
+
+    console.log('Connexió analitzada:', {
+        original: decodificat,
+        start: startNode,
+        end: endNode,
+        tipus: tipus,
+        contenidor: containerPath || 'global'
+    });
+
+    return { startNode, tipus, endNode };
 }
 
   marcarContenidors() {
