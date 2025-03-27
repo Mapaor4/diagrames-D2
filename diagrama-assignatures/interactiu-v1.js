@@ -237,16 +237,6 @@ class InteractiveSVG {
       // Construïm la nova expressió amb rutes absolutes
       return `(${prefix}.${node1} -> ${prefix}.${node2})[${index}]`;
   }
-  
-  mirarSiEsInterna(identificador) {
-      const index = identificador.indexOf(".("); // Busquem a quina posició hi ha un ".("
-      if (index === -1) { 
-          return identificador; // Si no hi ha ".(", retornem el mateix identificador
-      }
-      // El nou identificador és que hi ha després del primer parèntesi '('
-      return identificador.slice(index + 1);
-  }
-
 
   obtenirDescendents(classeBase) {
     const descendents = new Set();
