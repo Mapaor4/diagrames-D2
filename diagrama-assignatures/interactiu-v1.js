@@ -93,7 +93,6 @@ class InteractiveSVG {
           }
           this.containerMap.get(classePare).push(classeOriginal);
         }
-        console.log('Node registrat:', { classe: classeOriginal, decodificat });
       }
     });
 
