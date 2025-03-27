@@ -1,4 +1,5 @@
 class InteractiveSVG {
+  // ___________________________________EL SEGÜENT FUNCIONA BÉ:____________________________________
   constructor() {
     this.containerMap = new Map();
     this.parentMap = new Map();
@@ -26,7 +27,29 @@ class InteractiveSVG {
     document.head.appendChild(style);
   }
 
-  processarSVG() {
+  marcarContenidors() {
+    this.containerMap.forEach((fills, classePare) => {
+      const elementPare = document.querySelector(`.${CSS.escape(classePare)}`);
+      if (elementPare) {
+        elementPare.classList.add('diagram-container');
+      }
+    });
+  }
+
+  afegirListeners() { 
+    document.querySelectorAll('.diagram-node').forEach(node => {
+      node.addEventListener('mouseover', (e) => {
+        e.stopPropagation();
+        this.resaltar(node);
+      });
+      node.addEventListener('mouseout', () => this.reiniciar());
+    });
+  }
+
+  
+  // _____________________________A PARTIR D'AQUÍ NO TANT:______________________________ 
+
+  processarSVG() { // FALTA DETECTAR BÉ LES CONNEXIONS GERMANES!!!!!!!!!!!!!!!!!!!!!!1
     const svg = document.querySelector('.contenidor-svg svg');
     if (!svg) throw new Error('No es troba el SVG');
 
@@ -40,7 +63,7 @@ class InteractiveSVG {
 
       const decodificat = this.decodificarBase64(classeOriginal);
       
-      if (decodificat.startsWith('(')) {
+      if (decodificat.startsWith('(')) {  // EL PROBLEMA ESTÀ AQUÍ
         const infoConnexio = this.parsejarConnexio(decodificat);
         if (infoConnexio) {
           this.connexionsMap.set(classeOriginal, infoConnexio);
@@ -69,7 +92,7 @@ class InteractiveSVG {
     this.marcarContenidors();
   }
 
-  parsejarConnexio(decodificat) {
+  parsejarConnexio(decodificat) { // SEMBLA FUNCIONAR. Tot i així més endavant provar amb noms raros amb parentesis, guions i comes com "Hola-bon(dia), no?"
     const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
@@ -106,25 +129,8 @@ class InteractiveSVG {
     return { startNode, tipus, endNode };
 }
 
-  marcarContenidors() {
-    this.containerMap.forEach((fills, classePare) => {
-      const elementPare = document.querySelector(`.${CSS.escape(classePare)}`);
-      if (elementPare) {
-        elementPare.classList.add('diagram-container');
-      }
-    });
-  }
-
-  afegirListeners() {
-    document.querySelectorAll('.diagram-node').forEach(node => {
-      node.addEventListener('mouseover', (e) => {
-        e.stopPropagation();
-        this.resaltar(node);
-      });
-      node.addEventListener('mouseout', () => this.reiniciar());
-    });
-  }
-
+  // _________________________________HI HA ALGUN PETIT ERROR. LES CONNEXIONS DE DESCENDENTS NO SEMPRE ES MOSTREN________________________
+  // Nota: més endavant fer les dues versions d'aquesta funció: mostrant les connexions dels descendents i sense mostrar-les.
   obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
         const { includeDescendants = false } = options;
         const connexions = new Set();
@@ -166,7 +172,7 @@ class InteractiveSVG {
         };
     }
 
-    resaltar(node) {
+    resaltar(node) { // DIRIA QUE ESTÀ BÉ PERÒ POTSER S'HA DE CANVIAR ALGUNA COSA
         const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;
 
@@ -203,6 +209,9 @@ class InteractiveSVG {
         console.log('Elements visibles:', Array.from(elementsAMostrar)
             .map(el => this.decodificarBase64(Array.from(el.classList)[0])));
     }
+
+  
+  // ____________________TOT EL QUE QUEDA FUNCIONA PERFECTAMENT:______________________
 
   obtenirDescendents(classeBase) {
     const descendents = new Set();
