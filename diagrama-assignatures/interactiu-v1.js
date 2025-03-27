@@ -65,7 +65,7 @@ class InteractiveSVG {
         const decodificat = this.decodificarBase64(classeOriginal);
         console.log("Element descodificat:", decodificat);
         
-        if (this.includes(".(")) { // Connexio interna
+        if (decodificat.includes(".(")) { // Connexio interna
             console.log("Connexio interna (TROBADA):", decodificat);
             this.passarARutaAbsoluta(decodificat);
             const infoConnexio = this.parsejarConnexio(decodificat);
