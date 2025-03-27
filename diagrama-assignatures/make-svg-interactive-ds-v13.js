@@ -79,8 +79,8 @@ class InteractiveSVG {
 }
 
 parsejarConnexio(decodificat) {
-    // Regex millorat per gestionar tots els caràcters vàlids
-    const regex = /^(?:([^\.]+)\.?)?\(([^\(\)]+)\s*([-<>&]+)\s*([^\(\)]+)\)\[(\d+)\]$/;
+    // Regex millorat per gestionar tots els casos
+    const regex = /^(?:([\w.]+)\.?)?\((.*?)\s*([-<>&]+)\s*([^\)]+)\)\[(\d+)\]$/;
     const match = decodificat.match(regex);
     
     if (!match) {
@@ -92,6 +92,7 @@ parsejarConnexio(decodificat) {
     const tipus = match[3].replace(/&gt;/g, '>').trim();
 
     const generarRutaAbsoluta = (node) => {
+        // Si el node ja és absolut o no hi ha contenidor, retorna directament
         return (containerPath && !node.includes('.')) 
             ? `${containerPath}.${node}`
             : node;
