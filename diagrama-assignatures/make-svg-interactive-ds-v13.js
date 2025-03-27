@@ -32,41 +32,43 @@ class InteractiveSVG {
     const svg = document.querySelector('.contenidor-svg svg');
     if (!svg) throw new Error('No es troba el SVG');
 
+    // Netejar classes existents
     svg.querySelectorAll('g').forEach(g => {
         g.classList.remove('diagram-node', 'diagram-connection', 'diagram-container');
     });
 
+    // Processar cada element
     svg.querySelectorAll('g').forEach(g => {
         const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;
 
         const decodificat = this.decodificarBase64(classeOriginal);
-        console.log("Element decodificat:", decodificat);
+        console.log("Processant:", decodificat);
 
-        // LÒGICA DEFinitiva: És connexió si conté '( ... )'
-        const esConnexio = /\(.*\)/.test(decodificat);
+        // LÒGICA CLAU: Detectar connexions pel DARRER segment
+        const parts = decodificat.split('.');
+        const ultimSegment = parts[parts.length - 1];
+        const esConnexio = ultimSegment.startsWith('('); 
 
         if (esConnexio) {
-            console.log("Connexio detectada:", decodificat);
-            const infoConnexio = this.parsejarConnexio(decodificat);
-            if (infoConnexio) {
-                this.connexionsMap.set(classeOriginal, infoConnexio);
+            console.log("✅ És connexió:", decodificat);
+            const info = this.parsejarConnexio(decodificat);
+            if (info) {
+                this.connexionsMap.set(classeOriginal, info);
                 g.classList.add('diagram-connection');
-                console.log('Connexió registrada:', infoConnexio);
             } else {
-                console.warn("No s'ha pogut parsejar la connexió:", decodificat);
+                console.warn("⚠️ No s'ha pogut parsejar:", decodificat);
                 g.classList.add('diagram-node'); // Fallback
             }
         } else {
+            console.log("🔵 És node:", decodificat);
             g.classList.add('diagram-node');
-            const parts = decodificat.split('.');
+            // Registrar jerarquia
             this.fullHierarchy.set(classeOriginal, parts);
-            
             if (parts.length > 1) {
                 const nomPare = parts.slice(0, -1).join('.');
                 const classePare = this.codificarBase64(nomPare);
                 this.parentMap.set(classeOriginal, classePare);
-                
                 if (!this.containerMap.has(classePare)) {
                     this.containerMap.set(classePare, []);
                 }
@@ -79,36 +81,29 @@ class InteractiveSVG {
 }
 
 parsejarConnexio(decodificat) {
-    // Regex optimitzat per connexions globals i contenides
-    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*([-<>&]+)\s*([\w.-]+)\)\[(\d+)\]$/;
+    // Regex optimitzat per tots els casos
+    const regex = /^(?:([\w.]+)\.)?\(([\w-]+)\s*([-><]+|&gt;)\s*([\w-]+)\)\[\d+\]$/;
     const match = decodificat.match(regex);
-    
+
     if (!match) {
-        console.warn('Connexió no reconeguda:', decodificat);
+        console.error("❌ Format de connexió invàlid:", decodificat);
         return null;
     }
 
-    const containerPath = match[1] || '';
-    const tipus = match[3].replace(/&gt;/g, '>'); // Normalització
+    const contenidor = match[1] || '';
+    const start = match[2].trim();
+    const tipus = match[3].replace(/&gt;/g, '>');
+    const end = match[4].trim();
 
-    // Funció per generar rutes absolutes
-    const generarRutaAbsoluta = (node) => {
-        return (containerPath && !node.includes('.')) 
-            ? `${containerPath}.${node}`
-            : node;
+    // Generar rutes absolutes
+    const startNode = contenidor ? `${contenidor}.${start}` : start;
+    const endNode = contenidor ? `${contenidor}.${end}` : end;
+
+    return {
+        startNode: startNode,
+        tipus: tipus,
+        endNode: endNode
     };
-
-    const startNode = generarRutaAbsoluta(match[2].trim());
-    const endNode = generarRutaAbsoluta(match[4].trim());
-
-    console.log('Connexió analitzada:', { 
-        original: decodificat,
-        start: startNode,
-        end: endNode,
-        tipus: tipus
-    });
-
-    return { startNode, tipus, endNode };
 }
 
   marcarContenidors() {
