@@ -43,10 +43,8 @@ class InteractiveSVG {
         const decodificat = this.decodificarBase64(classeOriginal);
         console.log("Element decodificat:", decodificat);
 
-        // LÒGICA CLAU CORREGIDA: Detectar connexions per l'últim segment
-        const parts = decodificat.split('.');
-        const lastPart = parts[parts.length - 1];
-        const esConnexio = lastPart.startsWith('('); // <--- Canvi crític
+        // LÒGICA DEFinitiva: És connexió si conté '( ... )'
+        const esConnexio = /\(.*\)/.test(decodificat);
 
         if (esConnexio) {
             console.log("Connexio detectada:", decodificat);
@@ -57,7 +55,7 @@ class InteractiveSVG {
                 console.log('Connexió registrada:', infoConnexio);
             } else {
                 console.warn("No s'ha pogut parsejar la connexió:", decodificat);
-                g.classList.add('diagram-node'); // Fallback per si hi ha errors
+                g.classList.add('diagram-node'); // Fallback
             }
         } else {
             g.classList.add('diagram-node');
@@ -78,6 +76,39 @@ class InteractiveSVG {
     });
 
     this.marcarContenidors();
+}
+
+parsejarConnexio(decodificat) {
+    // Regex optimitzat per connexions globals i contenides
+    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*([-<>&]+)\s*([\w.-]+)\)\[(\d+)\]$/;
+    const match = decodificat.match(regex);
+    
+    if (!match) {
+        console.warn('Connexió no reconeguda:', decodificat);
+        return null;
+    }
+
+    const containerPath = match[1] || '';
+    const tipus = match[3].replace(/&gt;/g, '>'); // Normalització
+
+    // Funció per generar rutes absolutes
+    const generarRutaAbsoluta = (node) => {
+        return (containerPath && !node.includes('.')) 
+            ? `${containerPath}.${node}`
+            : node;
+    };
+
+    const startNode = generarRutaAbsoluta(match[2].trim());
+    const endNode = generarRutaAbsoluta(match[4].trim());
+
+    console.log('Connexió analitzada:', { 
+        original: decodificat,
+        start: startNode,
+        end: endNode,
+        tipus: tipus
+    });
+
+    return { startNode, tipus, endNode };
 }
 
   marcarContenidors() {
@@ -101,44 +132,6 @@ class InteractiveSVG {
 
   // ____________________________________________________-AIXO NO ACABA D'ESTAR BÉ________________________________________________________
 
-  parsejarConnexio(decodificat) {
-    // Regex millorat per capturar tots els casos
-    const regex = /^(?:([\w.]+)\.)?\(([\w.-]+)\s*([-<>&]+)\s*([\w.-]+)\)\[(\d+)\]$/;
-    const match = decodificat.match(regex);
-    
-    if (!match) {
-        console.warn('Connexió no reconeguda:', decodificat);
-        return null;
-    }
-
-    const containerPath = match[1] || '';
-    const tipus = match[3].replace(/&gt;/g, '>'); // Normalitza a '>'
-
-    // Funció per generar rutes absolutes
-    const generarRutaAbsoluta = (node) => {
-        // Si ja és absoluta o no hi ha contenidor pare
-        if (node.includes('.') || !containerPath) return node;
-        // Converteix a ruta absoluta
-        return `${containerPath}.${node}`;
-    };
-
-    const startNode = generarRutaAbsoluta(match[2].trim());
-    const endNode = generarRutaAbsoluta(match[4].trim()); // Fix: match[4] en lloc de match[6]
-
-    console.log('Connexió analitzada:', {
-        original: decodificat,
-        start: startNode,
-        end: endNode,
-        contenidor: containerPath,
-        tipus: tipus
-    });
-
-    return { 
-        startNode, 
-        tipus, 
-        endNode 
-    };
-}
 
   obtenirConnexionsRelacionades(nodeDecodificat) {
     const connexions = new Set();
