@@ -139,13 +139,10 @@ class InteractiveSVG {
     // _________________________________HI HA ALGUN PETIT ERROR. LES CONNEXIONS DE DESCENDENTS NO SEMPRE ES MOSTREN________________________
     // Nota: més endavant fer les dues versions d'aquesta funció: mostrant les connexions dels descendents i sense mostrar-les.
     /**
- * Obté totes les connexions relacionades amb un node, incloent:
- * - Connexions directes (on el node és origen o destí)
- * - Connexions dels descendents (si s'habilita)
- * - Connexions internes entre germans del mateix contenidor pare
- * @param {string} nodeDecodificat - Identificador del node en format llegible
- * @param {Object} options - Opcions de filtrat
- * @param {boolean} [options.includeDescendants=false] - Inclou connexions de tots els descendents
+ * Obté totes les connexions directament relacionades amb un node
+ * @param {string} nodeDecodificat - Identificador del node en text original
+ * @param {Object} options - Opcions de cerca
+ * @param {boolean} [options.includeDescendants] - Incloure connexions de tots els descendents
  * @returns {Object} Connexions i nodes relacionats
  */
 obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
@@ -157,43 +154,42 @@ obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
         const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
         if (!elementConnexio) return;
 
-        // 1. Connexió directa: node és origen o destí
-        const directe = info.startNode === nodeDecodificat || info.endNode === nodeDecodificat;
+        // 1. Connexions directes (node és origen o destí)
+        const esDirecta = (
+            info.startNode === nodeDecodificat || 
+            info.endNode === nodeDecodificat
+        );
 
-        // 2. Connexions de descendents (si està habilitat)
+        // 2. Connexions de descendents (si s'activa l'opció)
         const esDescendent = includeDescendants && (
             info.startNode.startsWith(`${nodeDecodificat}.`) || 
             info.endNode.startsWith(`${nodeDecodificat}.`)
         );
 
-        // 3. Connexions internes entre germans del mateix contenidor pare
-        let esConnexioInterna = false;
-        if (!includeDescendants && !directe) {
-            // Obtenir el contenidor pare del node actual
-            const classeActual = this.codificarBase64(nodeDecodificat);
-            const classePare = this.parentMap.get(classeActual);
-            
-            if (classePare) {
-                const nodePare = this.decodificarBase64(classePare);
-                // Verificar si ambdós nodes de la connexió pertanyen al mateix contenidor pare
-                const startEsGerma = info.startNode.startsWith(`${nodePare}.`);
-                const endEsGerma = info.endNode.startsWith(`${nodePare}.`);
-                esConnexioInterna = startEsGerma && endEsGerma;
-            }
-        }
+        // 3. Connexions internes dins del mateix contenidor (només per contenidors)
+        const nodeBase = nodeDecodificat.split('.')[0];
+        const esConnexioInterna = (
+            !includeDescendants && 
+            info.startNode.startsWith(nodeBase) && 
+            info.endNode.startsWith(nodeBase)
+        );
 
-        // Si compleix algun criteri, afegir connexió i nodes relacionats
-        if (directe || esDescendent || esConnexioInterna) {
+        if (esDirecta || esDescendent || esConnexioInterna) {
             connexions.add(elementConnexio);
             
-            // Afegir tots els nodes involucrats a la llista de relacionats
+            // Afegir nodes als relacionats
             [info.startNode, info.endNode].forEach(nomNode => {
                 const classeNode = this.codificarBase64(nomNode);
-                const nodeElement = document.querySelector(`.${CSS.escape(classeNode)}`);
-                if (nodeElement) nodesRelacionats.add(nodeElement);
+                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
+                if (node) nodesRelacionats.add(node);
             });
         }
     });
+
+    // DEBUG: Mostrar connexions trobades
+    console.log(`Connexions per ${nodeDecodificat} (descendents: ${includeDescendants}):`, 
+        Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])
+    );
 
     return { 
         connexions: Array.from(connexions), 
@@ -202,56 +198,50 @@ obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
 }
 
 /**
- * Resalta un node i tots els elements relacionats:
- * - El propi node
- * - Connexions directes
- * - Nodes veïns relacionats
- * - Descendents (si és contenidor)
- * - Connexions i veïns dels descendents
- * @param {Element} node - Element SVG del node a resaltar
+ * Resalta un node i tots els elements relacionats
+ * @param {Element} node - Element HTML del node
  */
 resaltar(node) {
     const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
     if (!classeOriginal) return;
 
     const nodeDecodificat = this.decodificarBase64(classeOriginal);
-    const elementsVisibles = new Set([node]); // Inclou el node principal
-    const esContenidor = this.containerMap.has(classeOriginal);
+    const elementsAMostrar = new Set([node]);
+    const esContenidor = node.classList.contains('diagram-container');
 
-    // 1. Obtenir connexions directes i nodes veïns
-    const { connexions, nodesRelacionats } = this.obtenirConnexionsRelacionades(nodeDecodificat);
-    connexions.forEach(c => elementsVisibles.add(c));
-    nodesRelacionats.forEach(n => elementsVisibles.add(n));
+    // 1. Obtenir connexions DIRECTES (del node o del contenidor)
+    const { connexions, nodesRelacionats } = esContenidor ? 
+        this.obtenirConnexionsRelacionades(nodeDecodificat, { includeDescendants: true }) :
+        this.obtenirConnexionsRelacionades(nodeDecodificat);
 
-    // 2. Si és contenidor, processar jerarquia completa
+    connexions.forEach(c => elementsAMostrar.add(c));
+    nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+
+    // 2. Si és contenidor, afegir TOTS els descendents i les seves connexions
     if (esContenidor) {
-        // a) Afegir TOTS els descendents
         const descendents = this.obtenirDescendents(classeOriginal);
         descendents.forEach(classeFill => {
             const elementFill = document.querySelector(`.${CSS.escape(classeFill)}`);
-            if (elementFill) elementsVisibles.add(elementFill);
+            if (elementFill) {
+                elementsAMostrar.add(elementFill);
+                
+                // Obtenir connexions DIRECTES del fill (sense descendents)
+                const fillDecodificat = this.decodificarBase64(classeFill);
+                const { connexions: connFills } = 
+                    this.obtenirConnexionsRelacionades(fillDecodificat);
+                connFills.forEach(c => elementsAMostrar.add(c));
+            }
         });
-
-        // b) Obtenir connexions de tota la jerarquia (incloent descendents)
-        const { connexions: connexionsJerarquia, nodesRelacionats: nodesJerarquia } = 
-            this.obtenirConnexionsRelacionades(nodeDecodificat, { includeDescendants: true });
-        
-        connexionsJerarquia.forEach(c => elementsVisibles.add(c));
-        nodesJerarquia.forEach(n => elementsVisibles.add(n));
     }
 
-    // 3. Aplicar visibilitat (amagar elements no relacionats)
+    // 3. Aplicar canvis de visibilitat
     document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
-        el.classList.toggle('hidden', !elementsVisibles.has(el));
+        el.classList.toggle('hidden', !elementsAMostrar.has(el));
     });
 
-    // DEBUG: Llistat d'elements visibles
-    console.log('Elements visibles:', Array.from(elementsVisibles).map(el => {
-        const classe = Array.from(el.classList).find(c => this.esBase64Valid(c));
-        return classe ? this.decodificarBase64(classe) : 'sense-identificador';
-    }));
+    // DEBUG: Mostrar jerarquia
+    console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
 }
-
   
     
     // ____________________TOT EL QUE QUEDA FUNCIONA PERFECTAMENT:______________________
