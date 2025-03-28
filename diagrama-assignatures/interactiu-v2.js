@@ -139,109 +139,109 @@ class InteractiveSVG {
     // _________________________________HI HA ALGUN PETIT ERROR. LES CONNEXIONS DE DESCENDENTS NO SEMPRE ES MOSTREN________________________
     // Nota: més endavant fer les dues versions d'aquesta funció: mostrant les connexions dels descendents i sense mostrar-les.
     /**
- * Obté totes les connexions directament relacionades amb un node
- * @param {string} nodeDecodificat - Identificador del node en text original
- * @param {Object} options - Opcions de cerca
- * @param {boolean} [options.includeDescendants] - Incloure connexions de tots els descendents
- * @returns {Object} Connexions i nodes relacionats
- */
-obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
-    const { includeDescendants = false } = options;
-    const connexions = new Set();
-    const nodesRelacionats = new Set();
-
-    this.connexionsMap.forEach((info, classeConnexio) => {
-        const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
-        if (!elementConnexio) return;
-
-        // 1. Connexions directes (node és origen o destí)
-        const esDirecta = (
-            info.startNode === nodeDecodificat || 
-            info.endNode === nodeDecodificat
-        );
-
-        // 2. Connexions de descendents (si s'activa l'opció)
-        const esDescendent = includeDescendants && (
-            info.startNode.startsWith(`${nodeDecodificat}.`) || 
-            info.endNode.startsWith(`${nodeDecodificat}.`)
-        );
-
-        // 3. Connexions internes dins del mateix contenidor (només per contenidors)
-        const nodeBase = nodeDecodificat.split('.')[0];
-        const esConnexioInterna = (
-            !includeDescendants && 
-            info.startNode.startsWith(nodeBase) && 
-            info.endNode.startsWith(nodeBase)
-        );
-
-        if (esDirecta || esDescendent || esConnexioInterna) {
-            connexions.add(elementConnexio);
-            
-            // Afegir nodes als relacionats
-            [info.startNode, info.endNode].forEach(nomNode => {
-                const classeNode = this.codificarBase64(nomNode);
-                const node = document.querySelector(`.${CSS.escape(classeNode)}`);
-                if (node) nodesRelacionats.add(node);
-            });
-        }
-    });
-
-    // DEBUG: Mostrar connexions trobades
-        console.log(`Connexions per ${nodeDecodificat} (descendents: ${includeDescendants}):`, 
-            Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0]))
-        );
-
-    return { 
-        connexions: Array.from(connexions), 
-        nodesRelacionats: Array.from(nodesRelacionats) 
-    };
-}
-
-/**
- * Resalta un node i tots els elements relacionats
- * @param {Element} node - Element HTML del node
- */
-resaltar(node) {
-    const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
-    if (!classeOriginal) return;
-
-    const nodeDecodificat = this.decodificarBase64(classeOriginal);
-    const elementsAMostrar = new Set([node]);
-    const esContenidor = node.classList.contains('diagram-container');
-
-    // 1. Obtenir connexions DIRECTES (del node o del contenidor)
-    const { connexions, nodesRelacionats } = esContenidor ? 
-        this.obtenirConnexionsRelacionades(nodeDecodificat, { includeDescendants: true }) :
-        this.obtenirConnexionsRelacionades(nodeDecodificat);
-
-    connexions.forEach(c => elementsAMostrar.add(c));
-    nodesRelacionats.forEach(n => elementsAMostrar.add(n));
-
-    // 2. Si és contenidor, afegir TOTS els descendents i les seves connexions
-    if (esContenidor) {
-        const descendents = this.obtenirDescendents(classeOriginal);
-        descendents.forEach(classeFill => {
-            const elementFill = document.querySelector(`.${CSS.escape(classeFill)}`);
-            if (elementFill) {
-                elementsAMostrar.add(elementFill);
+     * Obté totes les connexions directament relacionades amb un node
+     * @param {string} nodeDecodificat - Identificador del node en text original
+     * @param {Object} options - Opcions de cerca
+     * @param {boolean} [options.includeDescendants] - Incloure connexions de tots els descendents
+     * @returns {Object} Connexions i nodes relacionats
+     */
+    obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
+        const { includeDescendants = false } = options;
+        const connexions = new Set();
+        const nodesRelacionats = new Set();
+    
+        this.connexionsMap.forEach((info, classeConnexio) => {
+            const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
+            if (!elementConnexio) return;
+    
+            // 1. Connexions directes (node és origen o destí)
+            const esDirecta = (
+                info.startNode === nodeDecodificat || 
+                info.endNode === nodeDecodificat
+            );
+    
+            // 2. Connexions de descendents (si s'activa l'opció)
+            const esDescendent = includeDescendants && (
+                info.startNode.startsWith(`${nodeDecodificat}.`) || 
+                info.endNode.startsWith(`${nodeDecodificat}.`)
+            );
+    
+            // 3. Connexions internes dins del mateix contenidor (només per contenidors)
+            const nodeBase = nodeDecodificat.split('.')[0];
+            const esConnexioInterna = (
+                !includeDescendants && 
+                info.startNode.startsWith(nodeBase) && 
+                info.endNode.startsWith(nodeBase)
+            );
+    
+            if (esDirecta || esDescendent || esConnexioInterna) {
+                connexions.add(elementConnexio);
                 
-                // Obtenir connexions DIRECTES del fill (sense descendents)
-                const fillDecodificat = this.decodificarBase64(classeFill);
-                const { connexions: connFills } = 
-                    this.obtenirConnexionsRelacionades(fillDecodificat);
-                connFills.forEach(c => elementsAMostrar.add(c));
+                // Afegir nodes als relacionats
+                [info.startNode, info.endNode].forEach(nomNode => {
+                    const classeNode = this.codificarBase64(nomNode);
+                    const node = document.querySelector(`.${CSS.escape(classeNode)}`);
+                    if (node) nodesRelacionats.add(node);
+                });
             }
         });
+    
+        // DEBUG: Mostrar connexions trobades
+            // console.log(`Connexions per ${nodeDecodificat} (descendents: ${includeDescendants}):`, 
+            //     Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0]))
+            // );
+    
+        return { 
+            connexions: Array.from(connexions), 
+            nodesRelacionats: Array.from(nodesRelacionats) 
+        };
     }
-
-    // 3. Aplicar canvis de visibilitat
-    document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
-        el.classList.toggle('hidden', !elementsAMostrar.has(el));
-    });
-
-    // DEBUG: Mostrar jerarquia
-    console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
-}
+    
+    /**
+     * Resalta un node i tots els elements relacionats
+     * @param {Element} node - Element HTML del node
+     */
+    resaltar(node) {
+        const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
+        if (!classeOriginal) return;
+    
+        const nodeDecodificat = this.decodificarBase64(classeOriginal);
+        const elementsAMostrar = new Set([node]);
+        const esContenidor = node.classList.contains('diagram-container');
+    
+        // 1. Obtenir connexions DIRECTES (del node o del contenidor)
+        const { connexions, nodesRelacionats } = esContenidor ? 
+            this.obtenirConnexionsRelacionades(nodeDecodificat, { includeDescendants: true }) :
+            this.obtenirConnexionsRelacionades(nodeDecodificat);
+    
+        connexions.forEach(c => elementsAMostrar.add(c));
+        nodesRelacionats.forEach(n => elementsAMostrar.add(n));
+    
+        // 2. Si és contenidor, afegir TOTS els descendents i les seves connexions
+        if (esContenidor) {
+            const descendents = this.obtenirDescendents(classeOriginal);
+            descendents.forEach(classeFill => {
+                const elementFill = document.querySelector(`.${CSS.escape(classeFill)}`);
+                if (elementFill) {
+                    elementsAMostrar.add(elementFill);
+                    
+                    // Obtenir connexions DIRECTES del fill (sense descendents)
+                    const fillDecodificat = this.decodificarBase64(classeFill);
+                    const { connexions: connFills } = 
+                        this.obtenirConnexionsRelacionades(fillDecodificat);
+                    connFills.forEach(c => elementsAMostrar.add(c));
+                }
+            });
+        }
+    
+        // 3. Aplicar canvis de visibilitat
+        document.querySelectorAll('.diagram-node, .diagram-connection').forEach(el => {
+            el.classList.toggle('hidden', !elementsAMostrar.has(el));
+        });
+    
+        // DEBUG: Mostrar jerarquia
+        console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
+    }
   
     
     // ____________________TOT EL QUE QUEDA FUNCIONA PERFECTAMENT:______________________
