@@ -59,6 +59,10 @@ class InteractiveSVG {
       });
   
       svg.querySelectorAll('g').forEach(g => {
+        // Ignorar elements amb opacitat zero
+        const style = g.getAttribute('style');
+        if (style && /opacity\s*:\s*0(\.0+)?/.test(style)) return;
+          
         const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;  // Si no és base64 vàlid, passa al següent element
   
