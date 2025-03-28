@@ -14,7 +14,7 @@ D) Sense connexions dels descendents + mostrar també els descendents de veïns 
 - Si un element té una opacitat 0.6 per exemple, la transició d'opacitat l'ha de patir de 0 a 0.6, no pas de 0 a 1.
 - Revisar el 'Example-diagram-1' i perquè no s'està veient com s'hauria de veure.
   Nota: segurament sigui degut a que no es reconeixen les connexions en què els identificadors tenen espais
-  ![imatge](https://github.com/user-attachments/assets/1cc6049a-c1ff-44d1-b6bc-98ec9cd4be23)
+  <img src="[https://github.com/user-attachments/assets/299c0a48-e8c5-4ca1-b547-4307ac310a0b](https://github.com/user-attachments/assets/1cc6049a-c1ff-44d1-b6bc-98ec9cd4be23)" alt="Captura de pantalla" width="800">
 
 #### Altres
 - S'han d'afegir els 4 tipus de connexions (->, --, <-, <->). De moment sols esta implementada la normal (->).
