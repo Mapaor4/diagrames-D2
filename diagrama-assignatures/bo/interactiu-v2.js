@@ -1,5 +1,5 @@
 class InteractiveSVG {
-    // ___________________________________EL SEGÜENT FUNCIONA BÉ:____________________________________
+
     constructor() {
       this.containerMap = new Map();
       this.parentMap = new Map();
@@ -17,7 +17,7 @@ class InteractiveSVG {
       }
     }
   
-    afegirEstils() {
+    afegirEstils() { // --------------------------------------> MIRAR SI S'HA DE CANVIAR PER ELEMENTS AMB OPACITAT 0.5 O SIMILARS (declarats ja dins del D2)
       const style = document.createElement('style');
       style.textContent = `
         .hidden { opacity: 0.2 !important; transition: opacity 0.3s; }
@@ -45,10 +45,7 @@ class InteractiveSVG {
         node.addEventListener('mouseout', () => this.reiniciar());
       });
     }
-  
     
-    // _____________________________A PARTIR D'AQUÍ NO TANT:______________________________ 
-  
     processarSVG() { 
       const svg = document.querySelector('.contenidor-svg svg');
       if (!svg) throw new Error('No es troba el SVG');
@@ -108,7 +105,11 @@ class InteractiveSVG {
       this.marcarContenidors();
     }
   
-    parsejarConnexio(decodificat) { // SEMBLA FUNCIONAR. Tot i així més endavant provar amb noms raros amb parentesis, guions i comes com "Hola-bon(dia), no?"
+    parsejarConnexio(decodificat) { 
+      /* CAL MODIFICAR AQUESTA FUNCIÓ FINS QUE ESTIGUI TOTALMENT COMPLETA
+      - Provar amb noms raros amb parentesis, guions i comes com "Hola-bon(dia), no?"
+      - Implementar els altres tipus de connexions '--', '<->' (o '-&lt;-&gt;') i '<-' (o '&lt;-')
+      */
       const regex = /^(?:([\w.-]+)\.)?\(([\w.-]+)\s*(-(&gt;|>)|<(-|&gt;|>))\s*([\w.-]+)\)\[(\d+)\]$/;
       const match = decodificat.match(regex);
       
@@ -130,9 +131,9 @@ class InteractiveSVG {
       const startNode = resoldreRutaAbsoluta(match[2].trim(), containerPath);
       const endNode = resoldreRutaAbsoluta(match[6].trim(), containerPath);
   
-      // Debug per connexions internes
+      // Útil per fer debugging quan no es detecten correctament les connexions
       // if (containerPath) {
-      //     console.log(`Connexió interna processada:`, {
+      //     console.log(`Connexió processada:`, {
       //         original: decodificat,
       //         start: startNode,
       //         end: endNode,
@@ -143,15 +144,6 @@ class InteractiveSVG {
       return { startNode, tipus, endNode };
   }
   
-    // _________________________________HI HA ALGUN PETIT ERROR. LES CONNEXIONS DE DESCENDENTS NO SEMPRE ES MOSTREN________________________
-    // Nota: més endavant fer les dues versions d'aquesta funció: mostrant les connexions dels descendents i sense mostrar-les.
-    /**
-     * Obté totes les connexions directament relacionades amb un node
-     * @param {string} nodeDecodificat - Identificador del node en text original
-     * @param {Object} options - Opcions de cerca
-     * @param {boolean} [options.includeDescendants] - Incloure connexions de tots els descendents
-     * @returns {Object} Connexions i nodes relacionats
-     */
     obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
         const { includeDescendants = false } = options;
         const connexions = new Set();
@@ -169,7 +161,7 @@ class InteractiveSVG {
                 info.endNode === nodeDecodificat
             );
     
-            // 2. Connexions de descendents (si s'activa l'opció)
+            // 2. Connexions de descendents (si s'activa l'opció) ------> CONFIGURAR LA OPCIÓ AQUESTA CORRECTAMENT COM A PARÀMETRE OPCIONAL DE LA FUNCIÓ
             const esDescendent = includeDescendants && (
                 info.startNode.startsWith(`${nodeDecodificat}.`) || 
                 info.endNode.startsWith(`${nodeDecodificat}.`)
@@ -205,11 +197,8 @@ class InteractiveSVG {
             nodesRelacionats: Array.from(nodesRelacionats) 
         };
     }
+
     
-    /**
-     * Resalta un node i tots els elements relacionats
-     * @param {Element} node - Element HTML del node
-     */
     resaltar(node) {
         const classeOriginal = Array.from(node.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;
@@ -234,7 +223,7 @@ class InteractiveSVG {
                 if (elementFill) {
                     elementsAMostrar.add(elementFill);
                     
-                    // Obtenir connexions DIRECTES del fill (sense descendents)
+                    // Obtenir connexions DIRECTES del fill (sense descendents) ------> COMPROVAR QUE TAMBÉ FUNCIONA AMB CONNEXIONS DE NETS O BESNETS
                     const fillDecodificat = this.decodificarBase64(classeFill);
                     const { connexions: connFills } = 
                         this.obtenirConnexionsRelacionades(fillDecodificat);
@@ -252,11 +241,9 @@ class InteractiveSVG {
         // console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
     }
   
-    
-    // ____________________TOT EL QUE QUEDA FUNCIONA PERFECTAMENT:______________________
-  
+      
     passarARutaAbsoluta(identificador) {
-        const expressio_regex = /(.*)\.\((\w+)\s*->\s*(\w+)\)\[(\d+)\]/;  
+        const expressio_regex = /(.*)\.\((\w+)\s*->\s*(\w+)\)\[(\d+)\]/;  // ---------------------> CANVIAR-HO PER ACCEPTAR TAMBÉ '--', '<-' i '<->'
         // Detectem un punt '.' i una fletxa '->' per tal de separar l'expressió en 3.
         // Les tres expressions extretes seran: "ruta contenidor pare", "primer node", "segon node".
         const match = identificador.match(expressio_regex);
@@ -293,7 +280,7 @@ class InteractiveSVG {
       document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
     }
   
-    // Helpers
+    // Funcions senzilles útils
     esBase64Valid(str) {
       return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(str);
     }
