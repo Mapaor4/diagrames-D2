@@ -115,11 +115,9 @@ class InteractiveSVG {
   
       // Funció per resoldre rutes absolutes
       const resoldreRutaAbsoluta = (node, container) => {
-          // Si el node ja té un path absolut (conté punt), el deixem tal qual
-          if (node.includes('.')) return node;
-          
-          // Si estem en un contenidor, afegim el seu path
-          return container ? `${container}.${node}` : node;
+          // Si el node ja té un path absolut (conté punt), el deixem tal qual, sinó en retornem la noda ruta absoluta
+          return container ? `${container}.${node}` : node; // LÍNIA MODIFICADA
+
       };
   
       const startNode = resoldreRutaAbsoluta(match[2].trim(), containerPath);
