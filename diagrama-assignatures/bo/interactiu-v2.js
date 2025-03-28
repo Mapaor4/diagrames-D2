@@ -62,7 +62,6 @@ class InteractiveSVG {
         // Ignorar elements amb opacitat zero
         const style = g.getAttribute('style');
         if (style && /opacity\s*:\s*0(\.0+)?\s*(;|$)/.test(style)) {
-            console.log("Element amb opacitat zero, ignorat:", g);
             return;
         }
 
@@ -75,10 +74,8 @@ class InteractiveSVG {
         if (!classeOriginal) return;  // Si no és base64 vàlid, passa al següent element
   
         const decodificat = this.decodificarBase64(classeOriginal);
-        console.log("Element descodificat:", decodificat);
         
         if (decodificat.includes(".(")) { // Connexio interna
-            console.log("Connexio interna (TROBADA):", decodificat);
             this.passarARutaAbsoluta(decodificat);
             const infoConnexio = this.parsejarConnexio(decodificat);
             g.classList.add('diagram-connection');
@@ -86,12 +83,10 @@ class InteractiveSVG {
             this.connexionsMap.set(classeOriginal, infoConnexio);
         } else { 
             if(decodificat.startsWith('(')) { // Connexio externa
-                console.log("Connexio externa (TROBADA):", decodificat);
                 const infoConnexio = this.parsejarConnexio(decodificat);
                 g.classList.add('diagram-connection');
                 this.connexionsMap.set(classeOriginal, infoConnexio);
             } else {
-                console.log("Node (TROBAT):", decodificat);
                 g.classList.add('diagram-node');
                 const parts = decodificat.split('.');
                 this.fullHierarchy.set(classeOriginal, parts);
@@ -136,14 +131,14 @@ class InteractiveSVG {
       const endNode = resoldreRutaAbsoluta(match[6].trim(), containerPath);
   
       // Debug per connexions internes
-      if (containerPath) {
-          console.log(`Connexió interna processada:`, {
-              original: decodificat,
-              start: startNode,
-              end: endNode,
-              container: containerPath
-          });
-      }
+      // if (containerPath) {
+      //     console.log(`Connexió interna processada:`, {
+      //         original: decodificat,
+      //         start: startNode,
+      //         end: endNode,
+      //         container: containerPath
+      //     });
+      // }
   
       return { startNode, tipus, endNode };
   }
@@ -253,8 +248,8 @@ class InteractiveSVG {
             el.classList.toggle('hidden', !elementsAMostrar.has(el));
         });
     
-        // DEBUG: Mostrar jerarquia
-        console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
+        // DEBUG: Mostrar nodes seleccionats i jerarquia
+        // console.log(`Resaltant: ${nodeDecodificat} (${elementsAMostrar.size} elements visibles)`);
     }
   
     
