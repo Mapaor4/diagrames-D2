@@ -71,11 +71,13 @@ class InteractiveSVG {
             const infoConnexio = this.parsejarConnexio(decodificat);
             g.classList.add('diagram-connection');
             g.classList.add('internal-connection');
+            this.connexionsMap.set(classeOriginal, infoConnexio);
         } else { 
             if(decodificat.startsWith('(')) { // Connexio externa
                 console.log("Connexio externa (TROBADA):", decodificat);
                 const infoConnexio = this.parsejarConnexio(decodificat);
                 g.classList.add('diagram-connection');
+                this.connexionsMap.set(classeOriginal, infoConnexio);
             } else {
                 console.log("Node (TROBAT):", decodificat);
                 g.classList.add('diagram-node');
@@ -153,6 +155,8 @@ class InteractiveSVG {
         this.connexionsMap.forEach((info, classeConnexio) => {
             const elementConnexio = document.querySelector(`.${CSS.escape(classeConnexio)}`);
             if (!elementConnexio) return;
+            if (!info || !info.startNode || !info.endNode) return;
+
     
             // 1. Connexions directes (node és origen o destí)
             const esDirecta = (
@@ -298,7 +302,7 @@ class InteractiveSVG {
     }
   
     codificarBase64(str) {
-      return btoa(unescape(encodeURIComponent(str)));
+        return btoa(encodeURIComponent(str));
     }
   }
   
