@@ -187,9 +187,9 @@ obtenirConnexionsRelacionades(nodeDecodificat, options = {}) {
     });
 
     // DEBUG: Mostrar connexions trobades
-    console.log(`Connexions per ${nodeDecodificat} (descendents: ${includeDescendants}):`, 
-        Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0])
-    );
+        console.log(`Connexions per ${nodeDecodificat} (descendents: ${includeDescendants}):`, 
+            Array.from(connexions).map(c => this.decodificarBase64(Array.from(c.classList)[0]))
+        );
 
     return { 
         connexions: Array.from(connexions), 
