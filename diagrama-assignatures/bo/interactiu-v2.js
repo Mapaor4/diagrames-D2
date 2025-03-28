@@ -65,6 +65,11 @@ class InteractiveSVG {
             console.log("Element amb opacitat zero, ignorat:", g);
             return;
         }
+
+        // Ignorar elements personalitzats (en funció de la seva classe de D2)
+        const classesToIgnore = ['invisible', 'ignore', 'background']; // AFEGIR MÉS CLASSES A IGNORAR SI ES VOL
+        const hasIgnoredClass = Array.from(g.classList).some(cls => classesToIgnore.includes(cls));
+        if (hasIgnoredClass) return;
           
         const classeOriginal = Array.from(g.classList).find(c => this.esBase64Valid(c));
         if (!classeOriginal) return;  // Si no és base64 vàlid, passa al següent element
