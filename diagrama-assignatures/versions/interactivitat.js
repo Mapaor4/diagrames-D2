@@ -63,7 +63,7 @@ class InteractiveSVG {
         }
 
         // Ignorar elements personalitzats (en funció de la seva classe de D2)
-        const classesToIgnore = ['invisible', 'ignore', 'background']; // AFEGIR MÉS CLASSES A IGNORAR SI ES VOL
+        const classesToIgnore = ['invisible', 'ignore', 'background', 'llegenda', 'titol']; // AFEGIR MÉS CLASSES A IGNORAR SI ES VOL
         const hasIgnoredClass = Array.from(g.classList).some(cls => classesToIgnore.includes(cls));
         if (hasIgnoredClass) return;
           
