@@ -1,0 +1,353 @@
+# __________________CONFIGURACIÓ (LAYOUT)________________
+
+grid-rows: 20
+# Fem que sigui un 'grid diagram'
+# vertical-gap: 30
+# style: {
+#   stroke: "#666666"
+#   stroke-width: 8
+#   # double-border: true
+# }
+
+classes: {
+  semestre: {
+    grid-rows: 3 # El contenidor i les dues barres separadores
+    vertical-gap: 10
+    width: 2000
+    label: ""
+    style.opacity: 0
+  }
+  emplenar-fila: {
+    width: 1880 # 120 menys que la fila (sino no quedaria centrat)
+    height: 1
+    style.opacity: 0
+    label: ""
+  }
+  llegenda: {
+    # El contenidor i les dues barres separadores
+    # vertical-gap: 50
+    # grid-columns: 6
+    near: top-center
+    width: 500
+    style: {
+      multiple: true
+      stroke-width: 2
+      font-size: 55
+      italic: true
+      # opacity: 0.6
+      stroke: "#787774"
+      fill: "#f8f8f7"
+      fill-pattern: dots
+    }
+  }
+}
+
+# A cada contenidor (semestre) li posem una barra separadora a dalt
+
+# __________________CLASSES I ESTILS__________________
+
+classes: {
+  assignatura-contenidor: {
+    label.near: top-center
+  }
+  invisible: {
+    style.opacity: 0
+    label: ""
+  }
+  titol: {
+    shape: text
+    style: {
+      font-size: 55
+      italic: true
+    }
+  }
+  # _____TIPUS D'ASSIGNATURES_______
+  formacio-basica: {
+    style: {
+      # Blau
+      stroke: "#337ea9"
+      # stroke: "#e7f3f8"
+      fill: "#e7f3f8"
+      border-radius: 999
+    }
+  }
+  obligatoria-comuna: {
+    style: {
+      # Verd
+      stroke: "#448361"
+      # stroke: "#edf3ec"
+      fill: "#edf3ec"
+      border-radius: 999
+    }
+  }
+  obligatoria-fonamental: {
+    style: {
+      # Lila
+      stroke: "#9065b0"
+      # stroke: "#f8f3fc"
+      fill: "#f8f3fc"
+      border-radius: 999
+    }
+  }
+  obligatoria-aplicada: {
+    style: {
+      stroke: "#cb912f"
+      fill: "#fbf3db"
+      border-radius: 999
+    }
+  }
+  optativa: {
+    style: {
+      # Marró
+      stroke: "#9f6b53"
+      fill: "#f4eeee"
+      # Gris
+      # stroke: "#787774"
+      # fill: "#f8f8f7"
+      border-radius: 999
+    }
+  }
+  minor: {
+    style: {
+      # Rosa
+      stroke: "#c14c8a"
+      fill: "#fcf1f6"
+      border-radius: 999
+    }
+  }
+  # _____TIPUS DE CONNEXIONS_______
+  dashed: {
+    style: {stroke-dash: 5}
+  }
+}
+
+# _____________________ASSIGNATURES___________________
+llegenda-assignatures: Llegenda {class: llegenda}
+text-1r: 1r {class: titol}
+s1: Semestre 1 {
+  algebra: Àlgebra Lineal {class: formacio-basica}
+  calcul: Càlcul I {class: formacio-basica}
+  fonmec: Fonmec {class: formacio-basica}
+  quimica: Química {class: formacio-basica}
+  info: Informàtica {class: formacio-basica}
+}
+s2: Semestre 2 {
+  calculII: Càlcul II {class: formacio-basica}
+  edicv: EDICV {
+    class: [formacio-basica; assignatura-contenidor]
+    cv: Càlcul Vectorial {class: formacio-basica}
+    edos: Equacions Diferencials {class: formacio-basica}
+  }
+  feio: FEIO {class: formacio-basica}
+  foft: FOFT {class: formacio-basica}
+  fonlab: Fonlab {class: formacio-basica}
+}
+text-2n: 2n {class: titol}
+s3: Semestre 3 {
+  mecanica: Mecànica {class: obligatoria-comuna}
+  termo: Termodinàmica {class: obligatoria-comuna}
+  metodesI: Mètodes I {
+    class: [obligatoria-comuna; assignatura-contenidor]
+    probabilitat: Probabilitat {class: obligatoria-comuna}
+    var-complexa: Variable Complexa {class: obligatoria-comuna}
+  }
+  astro: Astronomia {class: obligatoria-comuna}
+}
+s4: Semestre 4 {
+  optica: Òptica {class: obligatoria-comuna}
+  electro: Electromagnetisme {class: obligatoria-comuna}
+  metodesII: Mètodes II {class: obligatoria-comuna}
+  meteo: Meteorologia {class: obligatoria-comuna}
+}
+text-3r: 3r {class: titol}
+s5: Semestre 5 {
+  # Semestre 5 - Obligatòria
+  quantica: Física Quàntica {class: obligatoria-comuna}
+  # Semestre 5 - Fonamental
+  medis: Física dels Medis Continus {class: obligatoria-fonamental}
+  electrodin: Electrodinàmica {class: obligatoria-fonamental}
+  compu: Física Computacional {class: obligatoria-fonamental}
+  mecteo: Mecànica Teòrica {class: obligatoria-fonamental}
+  # Semestre 5 - Aplicada
+  programacio: Programació {class: obligatoria-aplicada}
+  electronica: Electrònica Aplicada {class: obligatoria-aplicada}
+  tecno: Tecnologia Electromagnètica {class: obligatoria-aplicada}
+}
+
+s6: Semestre 6 {
+  # Semestre 6 - Obligatòria
+  fiesta: Física Estadística {class: obligatoria-comuna}
+  # Semester 6 - Fonamental
+  asco: Astrofísica i Cosmologia {
+    class: [obligatoria-fonamental; assignatura-contenidor]
+    astrofis: Astrofísica {class: obligatoria-fonamental}
+    cosmo: Cosmologia {class: obligatoria-fonamental}
+  }
+  mq: Mecànica Quàntica {class: obligatoria-fonamental}
+  Semestre 6 - Aplicada: {class: obligatoria-aplicada}
+  instrumentacio: Instrumentació {class: obligatoria-aplicada}
+  materials: Física dels Materials {class: obligatoria-aplicada}
+}
+
+opts3: Optatives de 3r {
+  # Semestre 5 - Optatives
+  astro-obs: Astronomia Observacional {class: optativa}
+  # Semestre 6 - Optatives
+  piva: PIVA {class: optativa}
+  meteodin: Meteodinàmca {class: optativa}
+  rg: Relativitat General {class: optativa}
+}
+
+text-4t: 4t {class: titol}
+s7: Semestre 7 {
+  # Semestre 7 - Obligatòria
+  fiestaso: Física de l'Estat Sòlid {class: obligatoria-comuna}
+  # Semestre 7 - Fonamental
+  nuclear: Física Nuclear i de Partícules {class: obligatoria-fonamental}
+  fenomens: Fenòmens Col·lectius i de Transició de Fase {class: obligatoria-fonamental}
+  atomica: Física Atòmica i de Radiació {class: obligatoria-fonamental}
+  # Semestre 7 - Aplicada
+  geo: Geofísica {class: obligatoria-aplicada}
+  fotonica: Fotònica {class: obligatoria-aplicada}
+}
+s8: Semestre 8 {
+  # Semestre 8 - Obligatòria
+  efis: Electrònica Física {class: obligatoria-fonamental}
+  # Semestre 8 - Fonamental
+  moderna: Laboratori de Física Moderna {class: obligatoria-fonamental}
+  # Semestre 8 - Aplicada
+  energia: Energia {class: obligatoria-aplicada}
+}
+
+text-opt: Optatives de 4t {class: titol}
+opts4a: Optatives de 4t {
+  espectroscopia: Fonaments d’espectroscòpia {class: optativa}
+  tinfo: Teoria de la informació {class: optativa}
+  fora-eq: Sistemes fora de l'equilibri {class: optativa}
+  micro-nano: Micro i nanotecnologia {class: optativa}
+  fccc: Canvi climàtic {class: optativa}
+  genere: Gènere i ciència {class: optativa}
+  historia: Història de la física {class: optativa}
+}
+
+opts4b: Optatives de 4t (part 2) {
+  altes-energies: Altes energies {class: optativa}
+  n-cossos: MQ de N-cossos i sistemes ultrafreds {class: optativa}
+  medica: Física Mèdica {class: optativa}
+  bio: Biofísica {class: optativa}
+  magnetisme: Magnetisme i superconductivitat {class: optativa}
+  plasmes: Plasmes i processos astrofísics {class: optativa}
+}
+
+text-opt-minor: Optatives del minor {class: titol}
+minorA: Optatives del Minor de Matemàtiques {
+  topo: Topologia {class: minor}
+  eqs-algebraiques: Equacions Algebraiques {class: minor}
+  eqs-dif: Equacions Diferencials {class: minor}
+  metodes-av: Mètodes Avançats {class: minor}
+  estadistica: Estadística {class: minor}
+  estructures: Estructures Algebraiques {class: minor}
+}
+
+minorB: Optatives del Minor de Matemàtiques (part 2): {
+  metodes-num: Mètodes Numèrics {class: minor}
+  geometria-dif: Geometria Diferencial {class: minor}
+  prob: Probabilitats {class: minor}
+  geo-global: Topologia i Geometria Global de Superfícies {class: minor}
+  grafs: Teoria de Grafs {class: minor}
+}
+
+llegenda-assignatures: {
+  fb: Formació bàsica {class: formacio-basica}
+  obg: Obligatòria {class: obligatoria-comuna}
+  fon: Obligatòria Fonamental {class: obligatoria-fonamental}
+  apl: Obligatòria Aplicada {class: obligatoria-aplicada}
+  opt: Optativa {class: optativa}
+  min: Optativa del minor {class: minor}
+}
+
+# ___________________ASSIGNEM CLASSES______________________
+
+# Als semesetres
+s1.class: semestre
+s2.class: semestre
+s3.class: semestre
+s4.class: semestre
+s5.class: semestre
+s6.class: semestre
+s7.class: semestre
+s8.class: semestre
+opts3.class: semestre
+opts4a.class: semestre
+opts4b.class: semestre
+minorA.class: semestre
+minorB.class: semestre
+llegenda-assignatures.class: llegenda
+
+s1.barra-separadora-dalt.class: emplenar-fila
+s2.barra-separadora-dalt.class: emplenar-fila
+s3.barra-separadora-dalt.class: emplenar-fila
+s4.barra-separadora-dalt.class: emplenar-fila
+s5.barra-separadora-dalt.class: emplenar-fila
+s6.barra-separadora-dalt.class: emplenar-fila
+s7.barra-separadora-dalt.class: emplenar-fila
+s8.barra-separadora-dalt.class: emplenar-fila
+opts3.barra-separadora-dalt.class: emplenar-fila
+opts4a.barra-separadora-dalt.class: emplenar-fila
+opts4b.barra-separadora-dalt.class: emplenar-fila
+minorA.barra-separadora-dalt.class: emplenar-fila
+minorB.barra-separadora-dalt.class: emplenar-fila
+
+# Aquí assignem classes a connexions sobretot.
+
+# ____________________RELACIONS (CONNEXIONS)__________________
+
+s1.calcul -> s2.calculII: {class: dashed}
+s1.algebra -> s2.feio
+s1.algebra -> s2.edicv.cv
+s1.calcul -> s2.edicv.edos
+s2.fonlab -> s3.termo
+s2.fonlab -> s3.mecanica
+s2.fonlab -> s3.metodesI.probabilitat
+s1.fonmec -> s3.mecanica
+s2.foft -> s5.medis
+s2.foft -> s3.termo
+s2.foft -> s4.metodesII
+s2.feio -> s4.optica
+s2.edicv.cv -> s4.electro
+s2.calculII -> s4.electro
+s2.calculII -> s3.metodesI.var-complexa
+s3.termo -> s6.fiesta
+s3.mecanica -> s5.mecteo
+s5.quantica -> s6.mq
+s4.meteo -> opts3.meteodin
+s4.electro -> s5.electrodin
+s3.astro -> s6.asco
+s6.fiesta -> s7.fiestaso
+s5.electrodin -> opts3.rg
+s5.quantica -> s7.nuclear
+s5.compu -> s7.fenomens
+s6.mq -> s7.nuclear
+s6.mq -> s7.atomica
+s4.electro -> s8.efis
+s4.optica -> s8.moderna
+s3.astro -> opts3.astro-obs
+s1.info -> opts3.piva
+s1.quimica -> s7.fiestaso
+s4.metodesII -> s5.medis
+
+# ________________MÉS CONFIGURACIÓ (LAYOUT)___________________
+
+s1.barra-separadora-baix.class: emplenar-fila
+s2.barra-separadora-baix.class: emplenar-fila
+s3.barra-separadora-baix.class: emplenar-fila
+s4.barra-separadora-baix.class: emplenar-fila
+s5.barra-separadora-baix.class: emplenar-fila
+s6.barra-separadora-baix.class: emplenar-fila
+s7.barra-separadora-baix.class: emplenar-fila
+s8.barra-separadora-baix.class: emplenar-fila
+opts3.barra-separadora-baix.class: emplenar-fila
+opts4a.barra-separadora-baix.class: emplenar-fila
+opts4b.barra-separadora-baix.class: emplenar-fila
+minorA.barra-separadora-baix.class: emplenar-fila
+minorB.barra-separadora-baix.class: emplenar-fila
