@@ -6,6 +6,7 @@ Podem veure-ho a [Example-test](https://mapaor4.github.io/diagrames-D2/diagrama-
 Fer dues versions.
 - Actual (connexions de descendents)
 - Sense connexions dels descendents
+
 Implementar un canvi visual necessari: que els veïns mostrin els seus descendents (però no les seves connexions). Costarà diria, però és el més adient visualment.
 
 ## Pendent de corregir
