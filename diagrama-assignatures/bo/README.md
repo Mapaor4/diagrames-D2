@@ -3,11 +3,10 @@
 Podem veure-ho a [Example-test](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/bo/connexions), [Example-diagram-1](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/bo/example-1) o [Diagrama-assignatures](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/bo/assignatures).
 
 ## Pendent a implemetar (extra)
-Fer tres versions.
-A) Actual (connexions de descendents)
-B) Sense connexions dels descendents
-C) Actual + mostrar també els descendents de veïns (no sols el contenidor veï amb els fills apaviguats)
-D) Sense connexions dels descendents + mostrar també els descendents de veïns (no sols el contenidor veï amb els fills apaviguats)
+Fer dues versions.
+- Actual (connexions de descendents)
+- Sense connexions dels descendents
+Implementar un canvi visual necessari: que els veïns mostrin els seus descendents (però no les seves connexions). Costarà diria, però és el més adient visualment.
 
 ## Pendent de corregir
 #### Prioritari
