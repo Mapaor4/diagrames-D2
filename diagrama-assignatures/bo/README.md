@@ -23,5 +23,8 @@ Implementar un canvi visual necessari: que els veïns mostrin els seus descenden
 - En un futur: afegir elements avançats de D2 com Markdown text, Imatges(icones), LaTeX, etc.
 - Comprovar que funciona sigui quina sigui la shape dels nodes o contenidors.
 
+#### Molt en un futur
+Seguint l'exemple de [d2.live](https://github.com/Watt3r/d2-live/tree/master), crear una aplicació web back-end que et generi el SVG incrustable a tot arreu simplement a partir del link que conté el codi encodificat just després de `/?script=`. La idea seria configrar-la modificant alguns fitxers Go per afegir la funcionalitat i disseny desitjats (centrat, zoomejable, interactiu, incrustable a Notion), penjar-la a Heroku (com a Docker build) i publicar-la en algun subdomini de 'martipardo.xyz', de manera que "https://interactive-svg.martipardo.xyz/?script=qlDQtVOo5AIEAAD__w%3D%3D&" generi un diagrama x -> y incrustable i interactiu.
+
 ## Un cop estigui enllestit
 Fer una repo de github molt fàcil de duplicar amb un README ben explicat en què simplement un duplica i canvia el 'D2-diagram.svg' pel seu propi, tria la versió (de les 4 possibles) i automàticament pot veure el SVG com a web interactiva. Posar també un fitxer CSS per controlar les dimensions de 'contenidor-svg' i el com aquest escala al canviar la resolució de la pàgina o en diferents dispositius (i permetre el zoom in, zoom out, etc.).
