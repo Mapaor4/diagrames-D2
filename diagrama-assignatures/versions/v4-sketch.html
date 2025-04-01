@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=1">
+    <title>Relacions entre assignatures</title>
+<!--     <link rel="stylesheet" href="diagrama-d2.css"> -->
+    <link rel="icon" type="image/png" href="https://github.githubassets.com/favicons/favicon.png">
+    
+</head>
+<body>
+    <div class="contenidor-svg"></div>
+
+    <script src="interactivitat3.js"></script> <!-- Script extern per la interactivitat -->
+    <script>
+        fetch("v4-sketch.svg")
+            .then(response => response.text())
+            .then(svgContent => {
+                const container = document.querySelector(".contenidor-svg");
+                if (!container) {
+                    console.error("Error: No s'ha trobat el contenidor SVG.");
+                    return;
+                }
+                container.innerHTML = svgContent;
+
+                // Si el script interactiu està carregat, cridem la funció
+                if (typeof attachSVGEvents === "function") {
+                    attachSVGEvents();
+                }
+            })
+            .catch(error => console.error("Error carregant l'SVG:", error));
+    </script>
+</body>
+</html>
