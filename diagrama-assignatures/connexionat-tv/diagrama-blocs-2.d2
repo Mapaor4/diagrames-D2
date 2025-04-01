@@ -1,0 +1,296 @@
+direction: right
+
+# CLASSES
+
+# Conversors i altres
+classes: {
+  hdmi-sdi: {
+    label: "HDMI → SDI"
+    shape: hexagon
+    width: 65
+    height: 30
+    style.font-size: 10
+  }
+  sdi-hdmi: {
+    label: "SDI → HDMI"
+    shape: hexagon
+    width: 65
+    height: 30
+    style.font-size: 10
+  }
+  dist: {
+    label: "DISTR."
+    shape: diamond
+    width: 50
+    height: 50
+    style.font-size: 10
+  }
+  desemb: {
+    label: "DESEMB."
+    shape: diamond
+    width: 50
+    height: 50
+    style.font-size: 10
+  }
+  emb: {
+    label: "EMB."
+    shape: diamond
+    width: 50
+    height: 50
+    style.font-size: 10
+  }
+}
+
+# Connexions
+classes: {
+  fibra: {
+    style.stroke: green
+  }
+  uhf: {
+    style: {
+      stroke: black
+      stroke-dash: 5
+    }
+  }
+  xlr3: {
+    style: {
+      stroke: black
+    }
+  }
+  jack: {
+    style: {
+      stroke: black
+    }
+  }
+  dante: {
+    style: {stroke: red}
+  }
+  usb-c: {
+    style.stroke: "#9234eb"
+  }
+  sdi: {
+    style.stroke: "#234bda"
+  }
+  BB: {
+    style.stroke: orange
+  }
+  dashed: {
+    style.stroke-dash: 5
+  }
+  dashedBB: {
+    style: {
+      stroke: orange
+      stroke-dash: 5
+    }
+  }
+  hdmi: {
+    style.stroke: "#51a2e0"
+  }
+}
+
+# ELEMENTS
+
+# Dispositius
+CAM1
+CCU1: {width: 150; height: 200}
+CAM2
+CCU2: {width: 150; height: 200}
+CAM3
+CCU3: {width: 150; height: 200}
+MIXER: MIXER ATEM TELEVISION STUDIO {width: 400; height: 800}
+SO: TAULA DE SO YAMAHA QL5 {width: 250; height: 400}
+# TITULADORA
+QBOX
+PLAYOUT: PLAYOUT GRASS VALLEY  T2
+MICRO1: MIC 1
+MICRO2: MIC 2
+MICRO3: MIC 3
+TX1: TRANSMISSOR 1
+TX2: TRANSMISSOR 2
+TX3: TRANSMISSOR 3
+RX: RECEPTOR
+TIO: TIO YAMAHA 1608-D
+HYPERDECK: GRAVADORA HYPERDECK STUDIO {height: 200}
+SSD: DISC DUR SSD
+VECTORBOX: EMISSOR VECTOR BOX
+MONITOR-PGM: MONTIOR PGM PLATÓ
+VIDEOWALL: VIDEOWALL
+
+AJA: FRAME SYNC AJA
+GENBB: GENERADOR BLACK BURST\n (PER SINCRONITZAR)
+TVU: {width: 150; height: 200}
+RECEPTOR-TVU: {width: 200; height: 200}
+VMIX
+MON-CCU: MONITOR CCU
+MON-REA: MONITOR MULTIVIEW REA
+MON-SO: MONITOR SO
+MUX: MULTIPLEXOR\n(MUX)
+MTX: MATRIU\n(MTX)
+
+# Conversors i altres elements
+distQBOX: {class: dist}
+distMIXER: {class: dist}
+desemb1: {class: desemb}
+desemb2: {class: desemb}
+emb1: {class: emb}
+sdi-hdmi1: {class: sdi-hdmi}
+sdi-hdmi2: {class: sdi-hdmi}
+
+distBB: {class: dist}
+sdi-hdmi3: {class: sdi-hdmi}
+# sdi-hdmi4: {class: sdi-hdmi}
+
+# RELACIONS
+
+CAM1 <-> CCU1: {class: fibra}
+CCU1 -> MIXER
+CAM2 <-> CCU2: {class: fibra}
+CCU2 -> MIXER
+CAM3 <-> CCU3: {class: fibra}
+CCU3 -> MIXER
+# TITULADORA -> MIXER
+# PROMPTER -> QBOX
+QBOX -> distQBOX
+distQBOX -> CCU1
+distQBOX -> CCU2
+distQBOX -> CCU3
+distQBOX -> MIXER
+MICRO1 -> TX1: {class: jack}
+TX1 -> RX: {class: uhf}
+MICRO2 -> TX2: {class: jack}
+TX2 -> RX: {class: uhf}
+MICRO3 -> TX3: {class: jack}
+TX3 -> rx: {class: uhf}
+RX -> TIO: {class: xlr3}
+TIO <-> SO: {class: dante}
+PLAYOUT -> desemb1
+desemb1 -> MIXER
+desemb1 -> SO: {class: xlr3}
+PLAYOUT -> sdi-hdmi1
+sdi-hdmi1 -> VIDEOWALL: {class: hdmi}
+MIXER -> desemb2
+desemb2 -> SO: {class: xlr3}
+SO -> emb1: {class: xlr3}
+MIXER -> emb1
+emb1 -> distMIXER
+distMIXER -> VECTORBOX
+distMIXER -> HYPERDECK
+distMIXER -> sdi-hdmi2
+sdi-hdmi2 -> MONITOR-PGM: {class: hdmi}
+HYPERDECK -> SSD: {class: usb-c}
+
+GENBB -> distBB: {class: BB}
+distBB -> CCU1: {class: BB}
+distBB -> CCU2: {class: BB}
+distBB -> CCU3: {class: BB}
+distBB -> MIXER: {class: BB}
+TVU -> RECEPTOR-TVU: {class: dashed}
+TVU -> RECEPTOR-TVU: {class: dashedBB}
+distMIXER -> TVU
+VMIX -> YAMAHA: {class: dante}
+VMIX -> MIXER
+MIXER -> sdi-hdmi3
+sdi-hdmi3 -> MON-CCU: {class: hdmi}
+MIXER -> sdi-hdmi4
+sdi-hdmi4 -> MON-SO: {class: hdmi}
+MIXER -> MON-REA: {class: hdmi}
+# RECEPTOR-TVU -> HYPERDECK
+AJA -> MIXER
+RECEPTOR-TVU -> distBB: {class: BB}
+RECEPTOR-TVU -> AJA
+RECEPTOR-TVU -> CCU1
+RECEPTOR-TVU -> CCU2
+RECEPTOR-TVU -> CCU3
+distBB -> TVU
+
+RECEPTOR-TVU -> MUX
+CCU1 -> MTX
+CCU2 -> MTX
+CCU3 -> MTX
+MIXER -> MTX
+RECEPTOR-TVU -> MTX
+MTX -> HYPERDECK
+HYPERDECK -> MIXER
+
+LLEGENDA: {
+  # Configuració i estil
+  grid-columns: 2
+  direction: right
+  near: bottom-center
+  width: 1500
+  # height: 100
+  label: "LLEGENDA"
+  style: {
+    double-border: true
+    italic: true
+    # fill: "#EDF0FD"
+    fill: white
+    font-size: 60
+  }
+
+  # Elements de la llegenda
+  col1: {
+    direction: right
+    style.opacity: 0
+    a1.style.opacity: 0
+    a2.style.opacity: 0
+    a1 -- a2: SDI
+    b1.style.opacity: 0
+    b2.style.opacity: 0
+    b1 -- b2: Dante {class: dante}
+    c1.style.opacity: 0
+    c2.style.opacity: 0
+    c1 -- c2: XLR-3 {class: xlr3}
+    d1.style.opacity: 0
+    d2.style.opacity: 0
+    d1 -- d2: Fibra {class: fibra}
+    e1.style.opacity: 0
+    e2.style.opacity: 0
+    e1 -- e2: HDMI {class: hdmi}
+    f1.style.opacity: 0
+    f2.style.opacity: 0
+    f1 -- f2: BB (Black Burst) {class: BB}
+    g1.style.opacity: 0
+    g2.style.opacity: 0
+    g1 -- g2: UHF (Ones de radio d'alta freq.) {class: uhf}
+  }
+  col2: {
+    grid-rows: 2
+    style.opacity: 0
+    vertical-gap: 0
+    fila1: {
+      direction: right
+      label: ""
+      style.opacity: 0
+      h1.style.opacity: 0
+      h2.style.opacity: 0
+      h1 -- h2: 5G (Dades mòbils) {class: dashedBB}
+      i1.style.opacity: 0
+      i2.style.opacity: 0
+      i1 -- i2: USB-C {class: usb-c}
+    }
+    fila2: {
+      grid-rows: 4
+      grid-columns: 2
+      vertical-gap: 30
+      label: ""
+      style.opacity: 0
+      j.class: hdmi-sdi
+      j-exp: |md
+        Conversor HDMI a SDI
+      | {style.stroke: gray; style.italic: true}
+      k.class: dist
+      k-exp: |md
+        Distribuïdor
+      | {style.stroke: gray; style.italic: true}
+      l.class: emb
+      l-exp: |md
+        Embebedor
+      | {style.stroke: gray; style.italic: true}
+      m.class: desemb
+      m-exp: |md
+        Desembebedor
+      | {style.stroke: gray; style.italic: true}
+    }
+  }
+}
