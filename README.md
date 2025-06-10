@@ -7,4 +7,4 @@ Aquí es podran visualitzar (com a webs) alguns dels diagrames generats amb [D2l
 ### Altres READMEs
 - [https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/bo/](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/bo/)
 - [https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/connexionat-tv/](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/connexionat-tv/)
-- [https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/versions/+(https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/versions/)
+- [https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/versions/](https://mapaor4.github.io/diagrames-D2/diagrama-assignatures/versions/)
