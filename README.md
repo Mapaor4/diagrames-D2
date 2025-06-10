@@ -19,7 +19,7 @@ Aquí es podran visualitzar (com a webs) alguns dels diagrames generats amb [D2l
     ### Posar-ho en un subdomini
     Posar l'HTML + JS en un repositori anomenat 'diagrama-assignatures-ub" i vincular-ho a un subdomini propi (per exemple 'diagrama.ub.fisica.cat' o 'assignatures.ub.fisica.cat' o 'diagrama.fisica.cat' o 'diagrama-assignatures.ub.fisica.cat' o 'diagrama-assignatures-ub.fisica.cat'.
   
-    ### Notion
+    ### Posar-ho en el Notion
   Posar un link a això (i també a la "guia acadèmica") a l'apartat 'Info assignatura' del Notion.
   </details>
 
