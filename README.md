@@ -8,7 +8,9 @@ Aquí es podran visualitzar (com a webs) alguns dels diagrames generats amb [D2l
     <summary>Coses a millorar</summary>
     
     ### Corregir script
-    Sembla anar tot bé però si selecciones qualsevol node del 2n semestre, es marca "Càlcul II" com a node veí. Mirar què causa l'error
+    Sembla anar tot bé però si selecciones qualsevol node del 2n semestre, es marca "Càlcul II" com a node veí. Mirar què causa l'error.
+
+    Fer també que les connexions no siguin seleccionables (al fer hover sobre elles dins d'un node no passi res).
   
     ### Corregir HTML
     Permetre fer fer zoom in i zoom out amb Ctrl+ i Ctrl- sense modificar el gràfic i la seva disposició.
