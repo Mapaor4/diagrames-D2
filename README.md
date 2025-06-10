@@ -6,15 +6,21 @@ Aquí es podran visualitzar (com a webs) alguns dels diagrames generats amb [D2l
 
   <details>
     <summary>Coses a millorar</summary>
+    
     ### Corregir script
     Sembla anar tot bé però si selecciones qualsevol node del 2n semestre, es marca "Càlcul II" com a node veí. Mirar què causa l'error
+  
     ### Corregir HTML
     Permetre fer fer zoom in i zoom out amb Ctrl+ i Ctrl- sense modificar el gràfic i la seva disposició.
+  
     ### Millorar el gràfic (diagrama D2)
     Acabar de fer bé les diferents connexions entre elles (totes, incloses les optatives)
+  
     ### Posar-ho en un subdomini
     Posar l'HTML + JS en un repositori anomenat 'diagrama-assignatures-ub" i vincular-ho a un subdomini propi (per exemple 'diagrama.ub.fisica.cat' o 'assignatures.ub.fisica.cat' o 'diagrama.fisica.cat' o 'diagrama-assignatures.ub.fisica.cat' o 'diagrama-assignatures-ub.fisica.cat'.
-    ### Posar un link a això i a la "guia acadèmica" a l'apartat 'Info assignatura' del Notion.
+  
+    ### Notion
+  Posar un link a això (i també a la "guia acadèmica") a l'apartat 'Info assignatura' del Notion.
   </details>
 
 ### Altres READMEs
