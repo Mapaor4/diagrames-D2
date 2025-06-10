@@ -8,7 +8,9 @@ Aquí es podran visualitzar (com a webs) alguns dels diagrames generats amb [D2l
     <summary>Coses a millorar</summary>
     
     ### Corregir script
-    Sembla anar tot bé però si selecciones qualsevol node del 2n semestre, es marca "Càlcul II" com a node veí. Mirar què causa l'error.
+    Tristament crec que he perdut l'script en D2 que feia el diagrama, sols hi ha el v1.d2 (que manté els colors i formes) i el v3.d2 (que manté la llegenda). Així que el primer de tot és recrear-lo altre vegada.
+  
+    Del diagrama mostrat, sembla anar tot bé però si selecciones qualsevol node del 2n semestre, es marca "Càlcul II" com a node veí. Mirar què causa l'error.
 
     Fer també que les connexions no siguin seleccionables (al fer hover sobre elles dins d'un node no passi res).
   
